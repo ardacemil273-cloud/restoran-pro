@@ -31,10 +31,10 @@ export default function AyarlarPage() {
     if (!user) return router.push('/login')
 
     const { data, error } = await supabase
-     .from('restoranlar')
-     .select('*')
-     .eq('sahibi_id', user.id)
-     .single()
+    .from('restoranlar')
+    .select('*')
+    .eq('sahibi_id', user.id)
+    .single()
 
     if (error) {
       toast.error('Restoran bulunamadı')
@@ -43,13 +43,14 @@ export default function AyarlarPage() {
     }
 
     if (data) {
-      console.log('RESTORAN DATA:', data) // kontrol için
+      console.log('RESTORAN DATA:', data)
       setRestoran(data)
       setAd(data.ad || '')
       setSlug(data.slug || '')
       setAciklama(data.aciklama || '')
       setLogoUrl(data.logo_url || '')
-      setTemaRenk(data.tema_renk || '#f59e0b')
+      // Tırnakları temizle, yoksa default ver
+      setTemaRenk(data.tema_renk?.replace(/'/g, '') || '#f59e0b')
     }
   }
 
@@ -67,8 +68,8 @@ export default function AyarlarPage() {
     const fileName = `${restoran.id}-${Date.now()}.${fileExt}`
 
     const { error: uploadError } = await supabase.storage
-     .from('logo')
-     .upload(fileName, file, { upsert: true })
+    .from('logo')
+    .upload(fileName, file, { upsert: true })
 
     if (uploadError) {
       toast.error('Logo yüklenemedi: ' + uploadError.message)
@@ -77,8 +78,8 @@ export default function AyarlarPage() {
     }
 
     const { data: { publicUrl } } = supabase.storage
-     .from('logo')
-     .getPublicUrl(fileName)
+    .from('logo')
+    .getPublicUrl(fileName)
 
     setLogoUrl(publicUrl)
     setUploading(false)
@@ -101,14 +102,14 @@ export default function AyarlarPage() {
 
     const payload = {
       id: restoran.id,
-      ad,
-      slug,
-      aciklama,
-      logo_url: logoUrl,
+      ad: ad.trim(),
+      slug: slug.trim(),
+      aciklama: aciklama.trim(),
+      logo_url: logoUrl || null,
       tema_renk: temaRenk
     }
 
-    console.log('GONDERILEN:', payload) // debug
+    console.log('GONDERILEN:', payload)
 
     const res = await fetch('/api/ayarlar/guncelle', {
       method: 'POST',
@@ -117,7 +118,7 @@ export default function AyarlarPage() {
     })
 
     const data = await res.json()
-    console.log('API CEVAP:', data) // debug
+    console.log('API CEVAP:', data)
 
     setKaydediyor(false)
 
@@ -223,11 +224,17 @@ export default function AyarlarPage() {
                   type="color"
                   value={temaRenk}
                   onChange={(e) => setTemaRenk(e.target.value)}
-                  className="w-16 h-10 p-1 bg-zinc-700 border-zinc-600"
+                  className="w-16 h-10 p-1 bg-zinc-700 border-zinc-600 cursor-pointer"
                 />
                 <Input
                   value={temaRenk}
-                  onChange={(e) => setTemaRenk(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (/^#[0-9A-F]{6}$/i.test(val) || val === '') {
+                      setTemaRenk(val)
+                    }
+                  }}
+                  placeholder="#f59e0b"
                   className="bg-zinc-700 border-zinc-600"
                 />
               </div>
