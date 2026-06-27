@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRestoran } from '@/lib/useRestoran'
 import { Card } from '@/components/ui/card'
@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { PAKETLER } from '@/lib/paketler'
 
-export default function PaketPage() {
+function PaketIcerik() {
   const { restoran, loading: restoranLoading } = useRestoran()
   const [iframeToken, setIframeToken] = useState<string | null>(null)
   const [odemeLoading, setOdemeLoading] = useState(false)
@@ -29,7 +29,7 @@ export default function PaketPage() {
       toast.error('Ödeme başarısız. Tekrar deneyin.')
       router.replace('/ayarlar/paket')
     }
-  }, [searchParams])
+  }, [searchParams, router])
 
   const odemeBaslat = async (paketTuru: string) => {
     if (!restoran) return
@@ -216,5 +216,17 @@ export default function PaketPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function PaketPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
+        Yükleniyor...
+      </div>
+    }>
+      <PaketIcerik />
+    </Suspense>
   )
 }

@@ -30,11 +30,16 @@ export default function AyarlarPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return router.push('/login')
 
-    const { data } = await supabase
+    const { data, error } = await supabase
     .from('restoranlar')
     .select('*')
     .eq('sahibi_id', user.id)
     .single()
+
+    if (error) {
+      toast.error('Restoran bulunamadı')
+      return
+    }
 
     if (data) {
       setRestoran(data)
@@ -50,6 +55,11 @@ export default function AyarlarPage() {
     const file = e.target.files?.[0]
     if (!file ||!restoran) return
 
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Logo 2MB\'dan küçük olmalı')
+      return
+    }
+
     setUploading(true)
     const fileExt = file.name.split('.').pop()
     const fileName = `${restoran.id}-${Date.now()}.${fileExt}`
@@ -59,7 +69,7 @@ export default function AyarlarPage() {
     .upload(fileName, file, { upsert: true })
 
     if (uploadError) {
-      toast.error('Logo yüklenemedi')
+      toast.error('Logo yüklenemedi: ' + uploadError.message)
       setUploading(false)
       return
     }
@@ -79,23 +89,31 @@ export default function AyarlarPage() {
       return
     }
 
+    if (!restoran?.id) {
+      toast.error('Restoran bulunamadı')
+      return
+    }
+
     setKaydediyor(true)
 
-    const { error } = await supabase
-    .from('restoranlar')
-    .update({
+    const res = await fetch('/api/ayarlar/guncelle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: restoran.id,
         ad,
         slug,
         aciklama,
         logo_url: logoUrl,
         tema_renk: temaRenk
       })
-    .eq('id', restoran.id)
+    })
 
+    const data = await res.json()
     setKaydediyor(false)
 
-    if (error) {
-      toast.error('Kaydedilemedi: ' + error.message)
+    if (!res.ok) {
+      toast.error('Kaydedilemedi: ' + data.error)
       return
     }
 
@@ -103,125 +121,138 @@ export default function AyarlarPage() {
     loadData()
   }
 
-  const menuLink = `https://senin-domain.com/menu/${slug}`
+  const menuLink = `https://restoran-pro.vercel.app/menu/${slug}`
 
   function linkKopyala() {
     navigator.clipboard.writeText(menuLink)
     toast.success('Menü linki kopyalandı')
   }
 
+  if (!restoran) {
+    return (
+      <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+          <p>Yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <h1 className="text-3xl font-bold mb-6">Restoran Ayarları</h1>
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Restoran Ayarları</h1>
 
-      <Card className="p-6 bg-zinc-800 border-zinc-700 max-w-2xl">
-        <div className="space-y-6">
-          {/* Logo */}
-          <div>
-            <Label className="mb-2 block">Logo</Label>
-            <div className="flex items-center gap-4">
-              {logoUrl? (
-                <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-zinc-700">
-                  <Image src={logoUrl} alt="Logo" fill className="object-cover" />
+        <Card className="p-6 bg-zinc-800 border-zinc-700">
+          <div className="space-y-6">
+            {/* Logo */}
+            <div>
+              <Label className="mb-2 block">Logo</Label>
+              <div className="flex items-center gap-4">
+                {logoUrl? (
+                  <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-zinc-700">
+                    <Image src={logoUrl} alt="Logo" fill className="object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-lg bg-zinc-700 flex items-center justify-center text-zinc-500">
+                    Yok
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    disabled={uploading}
+                    className="bg-zinc-700 border-zinc-600"
+                  />
+                  <p className="text-xs text-zinc-400 mt-1">PNG, JPG max 2MB</p>
                 </div>
-              ) : (
-                <div className="w-24 h-24 rounded-lg bg-zinc-700 flex items-center justify-center text-zinc-500">
-                  Yok
-                </div>
-              )}
-              <div>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoUpload}
-                  disabled={uploading}
-                  className="bg-zinc-700 border-zinc-600"
-                />
-                <p className="text-xs text-zinc-400 mt-1">PNG, JPG max 2MB</p>
               </div>
             </div>
-          </div>
 
-          {/* Restoran Adı */}
-          <div>
-            <Label htmlFor="ad">Restoran Adı</Label>
-            <Input
-              id="ad"
-              value={ad}
-              onChange={(e) => setAd(e.target.value)}
-              placeholder="Örn: Usta Döner"
-              className="bg-zinc-700 border-zinc-600"
-            />
-          </div>
-
-          {/* Slug */}
-          <div>
-            <Label htmlFor="slug">Menü Linki (Slug)</Label>
-            <Input
-              id="slug"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-              placeholder="orn: usta-doner"
-              className="bg-zinc-700 border-zinc-600"
-            />
-            <p className="text-xs text-zinc-400 mt-1">Sadece küçük harf, rakam ve tire</p>
-          </div>
-
-          {/* Açıklama */}
-          <div>
-            <Label htmlFor="aciklama">Açıklama</Label>
-            <Textarea
-              id="aciklama"
-              value={aciklama}
-              onChange={(e) => setAciklama(e.target.value)}
-              placeholder="Restoran hakkında kısa bilgi"
-              className="bg-zinc-700 border-zinc-600"
-              rows={3}
-            />
-          </div>
-
-          {/* Tema Rengi */}
-          <div>
-            <Label htmlFor="renk">Tema Rengi</Label>
-            <div className="flex items-center gap-3">
+            {/* Restoran Adı */}
+            <div>
+              <Label htmlFor="ad">Restoran Adı *</Label>
               <Input
-                id="renk"
-                type="color"
-                value={temaRenk}
-                onChange={(e) => setTemaRenk(e.target.value)}
-                className="w-16 h-10 p-1 bg-zinc-700 border-zinc-600"
-              />
-              <Input
-                value={temaRenk}
-                onChange={(e) => setTemaRenk(e.target.value)}
+                id="ad"
+                value={ad}
+                onChange={(e) => setAd(e.target.value)}
+                placeholder="Örn: Usta Döner"
                 className="bg-zinc-700 border-zinc-600"
               />
             </div>
-          </div>
 
-          {/* Menü Linki */}
-          {slug && (
-            <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-700">
-              <p className="text-sm text-zinc-400 mb-2">Müşteri Menü Linkin:</p>
-              <div className="flex items-center gap-2">
-                <Input value={menuLink} readOnly className="bg-zinc-800 border-zinc-600" />
-                <Button onClick={linkKopyala} size="icon" variant="outline">
-                  <Copy className="w-4 h-4" />
-                </Button>
+            {/* Slug */}
+            <div>
+              <Label htmlFor="slug">Menü Linki (Slug) *</Label>
+              <Input
+                id="slug"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                placeholder="orn: usta-doner"
+                className="bg-zinc-700 border-zinc-600"
+              />
+              <p className="text-xs text-zinc-400 mt-1">Sadece küçük harf, rakam ve tire kullanın</p>
+            </div>
+
+            {/* Açıklama */}
+            <div>
+              <Label htmlFor="aciklama">Açıklama</Label>
+              <Textarea
+                id="aciklama"
+                value={aciklama}
+                onChange={(e) => setAciklama(e.target.value)}
+                placeholder="Restoran hakkında kısa bilgi"
+                className="bg-zinc-700 border-zinc-600"
+                rows={3}
+              />
+            </div>
+
+            {/* Tema Rengi */}
+            <div>
+              <Label htmlFor="renk">Tema Rengi</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="renk"
+                  type="color"
+                  value={temaRenk}
+                  onChange={(e) => setTemaRenk(e.target.value)}
+                  className="w-16 h-10 p-1 bg-zinc-700 border-zinc-600"
+                />
+                <Input
+                  value={temaRenk}
+                  onChange={(e) => setTemaRenk(e.target.value)}
+                  className="bg-zinc-700 border-zinc-600"
+                />
               </div>
             </div>
-          )}
 
-          <Button
-            onClick={kaydet}
-            disabled={kaydediyor}
-            className="w-full bg-yellow-500 text-black hover:bg-yellow-600 font-bold"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {kaydediyor? 'Kaydediliyor...' : 'Kaydet'}
-          </Button>
-        </div>
-      </Card>
+            {/* Menü Linki */}
+            {slug && (
+              <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-700">
+                <p className="text-sm text-zinc-400 mb-2">Müşteri Menü Linkin:</p>
+                <div className="flex items-center gap-2">
+                  <Input value={menuLink} readOnly className="bg-zinc-800 border-zinc-600 text-sm" />
+                  <Button onClick={linkKopyala} size="icon" variant="outline" className="shrink-0">
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <Button
+              onClick={kaydet}
+              disabled={kaydediyor || uploading ||!ad ||!slug}
+              className="w-full bg-yellow-500 text-black hover:bg-yellow-600 font-bold"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {kaydediyor? 'Kaydediliyor...' : 'Kaydet'}
+            </Button>
+          </div>
+        </Card>
+      </div>
     </div>
   )
 }
