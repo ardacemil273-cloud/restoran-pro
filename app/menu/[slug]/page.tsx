@@ -3,17 +3,18 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { useParams, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { ShoppingCart, Plus, Minus, X } from 'lucide-react'
-import Image from 'next/image' // <-- BUNU EKLE
+import Image from 'next/image'
 
 type SepetItem = {
   id: string
   ad: string
   fiyat: number
   adet: number
-  resim_url?: string | null // <-- RESİM EKLEDİK
+  resim_url?: string | null
 }
 
 export default function MenuPage() {
@@ -30,20 +31,28 @@ export default function MenuPage() {
   const [masa, setMasa] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [siparisGonderiliyor, setSiparisGonderiliyor] = useState(false)
+  const [odemeYontemi, setOdemeYontemi] = useState('nakit') // YENİ
 
   useEffect(() => {
     loadMenu()
   }, [slug, masaAd])
 
+  // TEMA RENGİNİ CSS VARIABLE YAP - YENİ
+  useEffect(() => {
+    if (restoran?.tema_renk) {
+      const renk = restoran.tema_renk.replace(/'/g, '')
+      document.documentElement.style.setProperty('--tema', renk)
+    }
+  }, [restoran])
+
   async function loadMenu() {
     setLoading(true)
 
-    // 1. Restoranı bul
     const { data: restoranData, error: restoranError } = await supabase
-.from('restoranlar')
-.select('*')
-.eq('slug', slug)
-.single()
+     .from('restoranlar')
+     .select('*')
+     .eq('slug', slug)
+     .single()
 
     if (restoranError ||!restoranData) {
       toast.error('Restoran bulunamadı')
@@ -53,16 +62,15 @@ export default function MenuPage() {
 
     setRestoran(restoranData)
 
-    // 2. Masa var mı kontrol et - boşluk/tire normalize
     if (masaAd) {
       const masaAdiNormalize = masaAd.replace(/[-_]/g, ' ').trim()
 
       const { data: masaData } = await supabase
-.from('masalar')
-.select('*')
-.eq('restoran_id', restoranData.id)
-.ilike('ad', masaAdiNormalize)
-.maybeSingle()
+       .from('masalar')
+       .select('*')
+       .eq('restoran_id', restoranData.id)
+       .ilike('ad', masaAdiNormalize)
+       .maybeSingle()
 
       if (masaData) {
         setMasa(masaData)
@@ -71,25 +79,23 @@ export default function MenuPage() {
       }
     }
 
-    // 3. Kategorileri çek
     const { data: kategorilerData } = await supabase
-.from('kategoriler')
-.select('*')
-.eq('restoran_id', restoranData.id)
-.order('sira')
+     .from('kategoriler')
+     .select('*')
+     .eq('restoran_id', restoranData.id)
+     .order('sira')
 
     setKategoriler(kategorilerData || [])
     if (kategorilerData && kategorilerData.length > 0) {
       setAktifKategori(kategorilerData[0].id)
     }
 
-    // 4. Ürünleri çek
     const { data: urunlerData } = await supabase
-.from('urunler')
-.select('*')
-.eq('restoran_id', restoranData.id)
-.eq('aktif', true)
-.order('ad')
+     .from('urunler')
+     .select('*')
+     .eq('restoran_id', restoranData.id)
+     .eq('aktif', true)
+     .order('ad')
 
     setUrunler(urunlerData || [])
     setLoading(false)
@@ -101,11 +107,10 @@ export default function MenuPage() {
       if (varMi) {
         return prev.map(item =>
           item.id === urun.id
-        ? {...item, adet: item.adet + 1 }
+       ? {...item, adet: item.adet + 1 }
             : item
         )
       }
-      // RESİM_URL'İ DE SEPETE EKLE
       return [...prev, {
         id: urun.id,
         ad: urun.ad,
@@ -158,15 +163,16 @@ export default function MenuPage() {
     const toplam = sepet.reduce((sum, item) => sum + item.fiyat * item.adet, 0)
 
     const { data: siparis, error: siparisError } = await supabase
-.from('siparisler')
-.insert({
+     .from('siparisler')
+     .insert({
         restoran_id: restoran.id,
         masa_id: masa.id,
         toplam_tutar: toplam,
-        durum: 'hazirlaniyor'
+        durum: 'hazirlaniyor',
+        odeme_yontemi: odemeYontemi // YENİ
       })
-.select()
-.single()
+     .select()
+     .single()
 
     if (siparisError) {
       setSiparisGonderiliyor(false)
@@ -182,8 +188,8 @@ export default function MenuPage() {
     }))
 
     const { error: urunError } = await supabase
-.from('siparis_urunleri')
-.insert(siparisUrunleri)
+     .from('siparis_urunleri')
+     .insert(siparisUrunleri)
 
     if (urunError) {
       setSiparisGonderiliyor(false)
@@ -192,9 +198,9 @@ export default function MenuPage() {
     }
 
     await supabase
-.from('masalar')
-.update({ durum: 'dolu' })
-.eq('id', masa.id)
+     .from('masalar')
+     .update({ durum: 'dolu' })
+     .eq('id', masa.id)
 
     setSiparisGonderiliyor(false)
     setSepet([])
@@ -220,8 +226,9 @@ export default function MenuPage() {
     )
   }
 
+  const temaRenk = restoran?.tema_renk?.replace(/'/g, '') || '#f59e0b' // YENİ
   const filtrelenmisUrunler = aktifKategori
-? urunler.filter(u => u.kategori_id === aktifKategori)
+   ? urunler.filter(u => u.kategori_id === aktifKategori)
     : urunler
 
   const toplamTutar = sepet.reduce((sum, item) => sum + item.fiyat * item.adet, 0)
@@ -230,9 +237,9 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-zinc-900 text-white pb-24">
       <div className="sticky top-0 bg-zinc-900 border-b border-zinc-800 p-4 z-10">
-        <h1 className="text-2xl font-bold">{restoran.ad}</h1>
+        <h1 style={{ color: temaRenk }} className="text-2xl font-bold">{restoran.ad}</h1>
         {masa && (
-          <p className="text-sm text-yellow-500 mt-1">📍 {masa.ad}</p>
+          <p style={{ color: temaRenk }} className="text-sm mt-1 font-bold">📍 {masa.ad}</p>
         )}
       </div>
 
@@ -242,9 +249,12 @@ export default function MenuPage() {
             <button
               key={kat.id}
               onClick={() => setAktifKategori(kat.id)}
+              style={{
+                backgroundColor: aktifKategori === kat.id? temaRenk : undefined
+              }}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition ${
                 aktifKategori === kat.id
-              ? 'bg-yellow-500 text-black'
+                 ? 'text-white'
                   : 'bg-zinc-800 text-zinc-300'
               }`}
             >
@@ -261,7 +271,6 @@ export default function MenuPage() {
           filtrelenmisUrunler.map(urun => (
             <Card key={urun.id} className="p-0 bg-zinc-800 border-zinc-700 overflow-hidden">
               <div className="flex gap-3 p-4">
-                {/* RESİM KISMI - YENİ */}
                 {urun.resim_url? (
                   <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden">
                     <Image
@@ -285,11 +294,12 @@ export default function MenuPage() {
                     {urun.aciklama && (
                       <p className="text-sm text-zinc-400 mt-1 line-clamp-2">{urun.aciklama}</p>
                     )}
-                    <p className="text-xl font-bold text-yellow-500 mt-2">{urun.fiyat}₺</p>
+                    <p style={{ color: temaRenk }} className="text-xl font-bold mt-2">{urun.fiyat}₺</p>
                   </div>
                   <Button
                     onClick={() => sepeteEkle(urun)}
-                    className="bg-yellow-500 text-black hover:bg-yellow-600 h-10 w-10 p-0 flex-shrink-0"
+                    style={{ backgroundColor: temaRenk }}
+                    className="text-white hover:opacity-80 h-10 w-10 p-0 flex-shrink-0"
                   >
                     <Plus size={20} />
                   </Button>
@@ -303,7 +313,8 @@ export default function MenuPage() {
       {sepet.length > 0 && (
         <button
           onClick={() => setSepetAcik(true)}
-          className="fixed bottom-4 left-4 right-4 bg-yellow-500 text-black font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 z-20"
+          style={{ backgroundColor: temaRenk }}
+          className="fixed bottom-4 left-4 right-4 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 z-20"
         >
           <ShoppingCart size={20} />
           Sepeti Görüntüle ({toplamAdet} ürün) - {toplamTutar}₺
@@ -314,7 +325,7 @@ export default function MenuPage() {
         <div className="fixed inset-0 bg-black/80 z-30 flex items-end">
           <div className="bg-zinc-900 w-full max-h-[80vh] rounded-t-2xl overflow-hidden flex flex-col">
             <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
-              <h2 className="text-xl font-bold">Sepetim</h2>
+              <h2 style={{ color: temaRenk }} className="text-xl font-bold">Sepetim</h2>
               <button onClick={() => setSepetAcik(false)}>
                 <X size={24} />
               </button>
@@ -323,7 +334,6 @@ export default function MenuPage() {
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {sepet.map(item => (
                 <div key={item.id} className="flex gap-3 bg-zinc-800 p-3 rounded">
-                  {/* SEPET İÇİ RESİM - YENİ */}
                   {item.resim_url? (
                     <div className="relative w-16 h-16 flex-shrink-0 rounded overflow-hidden">
                       <Image
@@ -368,14 +378,29 @@ export default function MenuPage() {
             </div>
 
             <div className="p-4 border-t border-zinc-800 bg-zinc-900">
+              {/* ÖDEME YÖNTEMİ - YENİ */}
+              <div className="mb-4">
+                <Label className="text-zinc-200 mb-2 block">Ödeme Yöntemi</Label>
+                <select
+                  value={odemeYontemi}
+                  onChange={(e) => setOdemeYontemi(e.target.value)}
+                  className="w-full bg-zinc-700 border-zinc-600 rounded p-2 text-white"
+                >
+                  <option value="nakit">Nakit</option>
+                  <option value="kart">Kredi/Banka Kartı</option>
+                  <option value="veresiye">Veresiye</option>
+                </select>
+              </div>
+
               <div className="flex justify-between mb-4 text-lg">
                 <span className="font-bold">Toplam:</span>
-                <span className="font-bold text-yellow-500">{toplamTutar}₺</span>
+                <span style={{ color: temaRenk }} className="font-bold">{toplamTutar}₺</span>
               </div>
               <Button
                 onClick={siparisVer}
                 disabled={siparisGonderiliyor ||!masa}
-                className="w-full bg-green-600 hover:bg-green-700 font-bold py-6 text-lg disabled:bg-zinc-600"
+                style={{ backgroundColor: temaRenk }}
+                className="w-full text-white hover:opacity-80 font-bold py-6 text-lg disabled:bg-zinc-600"
               >
                 {siparisGonderiliyor? 'Gönderiliyor...' :!masa? 'Masa Seçilmedi' : 'Sipariş Ver'}
               </Button>

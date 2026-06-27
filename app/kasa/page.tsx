@@ -30,6 +30,7 @@ export default function KasaPage() {
   const [urunler, setUrunler] = useState<Urun[]>([])
   const [gunlukCiro, setGunlukCiro] = useState(0)
   const [restoran, setRestoran] = useState<any>(null)
+  const [temaRenk, setTemaRenk] = useState('#f59e0b')
   const [siparisModal, setSiparisModal] = useState(false)
   const [seciliMasa, setSeciliMasa] = useState<string>('')
   const [sepet, setSepet] = useState<{ id: string; ad: string; fiyat: number; adet: number }[]>([])
@@ -44,27 +45,28 @@ export default function KasaPage() {
     if (!user) return router.push('/login')
 
     const { data: restoranData } = await supabase
-    .from('restoranlar')
-    .select('*')
-    .eq('sahibi_id', user.id)
-    .single()
+  .from('restoranlar')
+  .select('*')
+  .eq('sahibi_id', user.id)
+  .single()
 
     if (!restoranData) return
     setRestoran(restoranData)
+    setTemaRenk(restoranData.tema_renk?.replace(/'/g, '') || '#f59e0b')
 
     // Tüm masalar
     const { data: tumMasaData } = await supabase
-    .from('masalar')
-    .select('*')
-    .eq('restoran_id', restoranData.id)
-    .order('ad')
+  .from('masalar')
+  .select('*')
+  .eq('restoran_id', restoranData.id)
+  .order('ad')
 
     setTumMasalar(tumMasaData || [])
 
     // Dolu masalar + siparişler
     const { data: masaData } = await supabase
-    .from('masalar')
-    .select(`
+  .from('masalar')
+  .select(`
         *,
         siparisler!inner (
           id,
@@ -73,31 +75,31 @@ export default function KasaPage() {
           created_at
         )
       `)
-    .eq('restoran_id', restoranData.id)
-    .eq('durum', 'dolu')
-    .neq('siparisler.durum', 'iptal')
-    .neq('siparisler.durum', 'odendi')
+  .eq('restoran_id', restoranData.id)
+  .eq('durum', 'dolu')
+  .neq('siparisler.durum', 'iptal')
+  .neq('siparisler.durum', 'odendi')
 
     setMasalar(masaData || [])
 
     // Ürünler - kasadan eklemek için
     const { data: urunData } = await supabase
-    .from('urunler')
-    .select('*')
-    .eq('restoran_id', restoranData.id)
-    .eq('aktif', true)
-    .order('ad')
+  .from('urunler')
+  .select('*')
+  .eq('restoran_id', restoranData.id)
+  .eq('aktif', true)
+  .order('ad')
 
     setUrunler(urunData || [])
 
     // Günlük ciro
     const bugun = new Date().toISOString().split('T')[0]
     const { data: ciroData } = await supabase
-    .from('siparisler')
-    .select('toplam_tutar')
-    .eq('restoran_id', restoranData.id)
-    .eq('durum', 'odendi')
-    .gte('created_at', `${bugun}T00:00:00`)
+  .from('siparisler')
+  .select('toplam_tutar')
+  .eq('restoran_id', restoranData.id)
+  .eq('durum', 'odendi')
+  .gte('created_at', `${bugun}T00:00:00`)
 
     const ciro = ciroData?.reduce((sum, s) => sum + Number(s.toplam_tutar), 0) || 0
     setGunlukCiro(ciro)
@@ -138,8 +140,8 @@ export default function KasaPage() {
 
     // 1. Sipariş oluştur
     const { data: siparis, error: siparisError } = await supabase
-    .from('siparisler')
-    .insert({
+  .from('siparisler')
+  .insert({
         restoran_id: restoran.id,
         masa_id: seciliMasa,
         masa_ad: masa?.ad,
@@ -147,8 +149,8 @@ export default function KasaPage() {
         durum: 'hazirlaniyor',
         siparis_notu: 'Kasa siparişi'
       })
-    .select()
-    .single()
+  .select()
+  .single()
 
     if (siparisError) {
       toast.error('Sipariş oluşturulamadı')
@@ -179,15 +181,15 @@ export default function KasaPage() {
     if (!confirm(`${masaAd} kapatılsın mı? Tüm siparişler ödendi sayılacak.`)) return
 
     await supabase
-    .from('siparisler')
-    .update({ durum: 'odendi' })
-    .eq('masa_id', masaId)
-    .in('durum', ['hazirlaniyor', 'hazir', 'tamamlandi'])
+  .from('siparisler')
+  .update({ durum: 'odendi' })
+  .eq('masa_id', masaId)
+  .in('durum', ['hazirlaniyor', 'hazir', 'tamamlandi'])
 
     await supabase
-    .from('masalar')
-    .update({ durum: 'bos' })
-    .eq('id', masaId)
+  .from('masalar')
+  .update({ durum: 'bos' })
+  .eq('id', masaId)
 
     toast.success(`${masaAd} kapatıldı`)
     loadData()
@@ -196,29 +198,40 @@ export default function KasaPage() {
   const toplamSepet = sepet.reduce((sum, i) => sum + i.fiyat * i.adet, 0)
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white p-6">
+    <div className="min-h-screen bg-zinc-900 text-zinc-100 p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">{restoran?.ad} - Kasa</h1>
-        <Button onClick={() => setSiparisModal(true)} className="bg-orange-600 hover:bg-orange-700">
+        <h1 style={{ color: temaRenk }} className="text-3xl font-bold">
+          {restoran?.ad} - Kasa
+        </h1>
+        <Button
+          onClick={() => setSiparisModal(true)}
+          style={{ backgroundColor: temaRenk }}
+          className="text-white hover:opacity-80"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Sipariş Ekle
         </Button>
       </div>
 
       {/* Günlük Ciro */}
-      <Card className="p-6 bg-green-950/30 border-green-700 mb-6">
+      <Card
+        style={{ borderColor: temaRenk + '40', backgroundColor: temaRenk + '10' }}
+        className="p-6 border-2 mb-6"
+      >
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-zinc-400">Bugünkü Ciro</p>
-            <p className="text-4xl font-bold text-green-500">{gunlukCiro.toFixed(2)}₺</p>
+            <p style={{ color: temaRenk }} className="text-4xl font-bold">
+              {gunlukCiro.toFixed(2)}₺
+            </p>
           </div>
-          <DollarSign className="w-12 h-12 text-green-500" />
+          <DollarSign style={{ color: temaRenk }} className="w-12 h-12" />
         </div>
       </Card>
 
       {/* Açık Masalar */}
-      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <Users className="text-orange-500" />
+      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-zinc-100">
+        <Users style={{ color: temaRenk }} />
         Açık Masalar ({masalar.length})
       </h2>
 
@@ -231,15 +244,22 @@ export default function KasaPage() {
           {masalar.map(masa => {
             const toplam = masa.siparisler.reduce((sum: number, s: any) => sum + Number(s.toplam_tutar), 0)
             return (
-              <Card key={masa.id} className="p-4 bg-zinc-800 border-orange-700 border-2">
+              <Card
+                key={masa.id}
+                style={{ borderColor: temaRenk }}
+                className="p-4 bg-white text-zinc-900 border-2"
+              >
                 <div className="flex justify-between items-start mb-3">
-                  <h3 className="text-xl font-bold">{masa.ad}</h3>
+                  <h3 className="text-xl font-bold text-zinc-900">{masa.ad}</h3>
                   <Badge className="bg-red-500 text-white">DOLU</Badge>
                 </div>
-                <p className="text-2xl font-bold text-yellow-500 mb-4">{toplam.toFixed(2)}₺</p>
+                <p style={{ color: temaRenk }} className="text-2xl font-bold mb-4">
+                  {toplam.toFixed(2)}₺
+                </p>
                 <Button
                   onClick={() => masaKapat(masa.id, masa.ad)}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  style={{ backgroundColor: temaRenk }}
+                  className="w-full text-white hover:opacity-80"
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Masayı Kapat
@@ -252,19 +272,19 @@ export default function KasaPage() {
 
       {/* Sipariş Ekleme Modal */}
       <Dialog open={siparisModal} onOpenChange={setSiparisModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-zinc-100 max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Kasadan Sipariş Ekle</DialogTitle>
+            <DialogTitle style={{ color: temaRenk }}>Kasadan Sipariş Ekle</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <Select value={seciliMasa} onValueChange={setSeciliMasa}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700">
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
                 <SelectValue placeholder="Masa seç" />
               </SelectTrigger>
               <SelectContent className="bg-zinc-800 border-zinc-700">
                 {tumMasalar.map(masa => (
-                  <SelectItem key={masa.id} value={masa.id}>
+                  <SelectItem key={masa.id} value={masa.id} className="text-white">
                     {masa.ad} {masa.durum === 'dolu' && '(Dolu)'}
                   </SelectItem>
                 ))}
@@ -277,40 +297,47 @@ export default function KasaPage() {
                   key={urun.id}
                   onClick={() => sepeteEkle(urun)}
                   variant="outline"
-                  className="justify-between border-zinc-700 hover:bg-zinc-800"
+                  style={{ borderColor: temaRenk + '40' }}
+                  className="justify-between border-zinc-700 hover:bg-zinc-800 text-white"
                 >
                   <span>{urun.ad}</span>
-                  <span className="text-yellow-500">{urun.fiyat}₺</span>
+                  <span style={{ color: temaRenk }}>{urun.fiyat}₺</span>
                 </Button>
               ))}
             </div>
 
             {sepet.length > 0 && (
               <div className="border-t border-zinc-700 pt-4">
-                <h3 className="font-bold mb-2 flex items-center gap-2">
+                <h3 className="font-bold mb-2 flex items-center gap-2 text-zinc-100">
                   <ShoppingCart className="w-4 h-4" />
                   Sepet
                 </h3>
                 {sepet.map(item => (
                   <div key={item.id} className="flex justify-between items-center mb-2 bg-zinc-800 p-2 rounded">
-                    <span>{item.ad}</span>
+                    <span className="text-zinc-100">{item.ad}</span>
                     <div className="flex items-center gap-2">
-                      <Button size="icon" variant="outline" className="h-6 w-6" onClick={() => adetGuncelle(item.id, -1)}>
+                      <Button size="icon" variant="outline" className="h-6 w-6 border-zinc-600" onClick={() => adetGuncelle(item.id, -1)}>
                         <Minus className="w-3 h-3" />
                       </Button>
-                      <span className="w-6 text-center">{item.adet}</span>
-                      <Button size="icon" variant="outline" className="h-6 w-6" onClick={() => adetGuncelle(item.id, 1)}>
+                      <span className="w-6 text-center text-white">{item.adet}</span>
+                      <Button size="icon" variant="outline" className="h-6 w-6 border-zinc-600" onClick={() => adetGuncelle(item.id, 1)}>
                         <Plus className="w-3 h-3" />
                       </Button>
-                      <span className="w-16 text-right text-yellow-500">{(item.fiyat * item.adet).toFixed(2)}₺</span>
+                      <span style={{ color: temaRenk }} className="w-16 text-right font-bold">
+                        {(item.fiyat * item.adet).toFixed(2)}₺
+                      </span>
                     </div>
                   </div>
                 ))}
                 <div className="flex justify-between text-xl font-bold mt-4 pt-4 border-t border-zinc-700">
-                  <span>Toplam:</span>
-                  <span className="text-green-500">{toplamSepet.toFixed(2)}₺</span>
+                  <span className="text-zinc-100">Toplam:</span>
+                  <span style={{ color: temaRenk }}>{toplamSepet.toFixed(2)}₺</span>
                 </div>
-                <Button onClick={kasadanSiparisVer} className="w-full mt-4 bg-green-600 hover:bg-green-700">
+                <Button
+                  onClick={kasadanSiparisVer}
+                  style={{ backgroundColor: temaRenk }}
+                  className="w-full mt-4 text-white hover:opacity-80"
+                >
                   Siparişi Kaydet
                 </Button>
               </div>
