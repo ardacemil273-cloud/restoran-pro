@@ -8,20 +8,37 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
-    const { id, ad, slug, aciklama, logo_url, tema_renk } = await request.json()
-if (!id || !ad || !slug) {
-  return NextResponse.json({ error: 'ID, ad ve slug zorunlu' }, { status: 400 })
-}
+    const body = await request.json()
+    console.log('API Gelen:', body)
 
+    const { id, ad, slug, aciklama, logo_url, tema_renk } = body
+
+    if (!id ||!ad ||!slug) {
+      return NextResponse.json({
+        error: 'ID, ad ve slug zorunlu',
+        gelen: { id, ad, slug }
+      }, { status: 400 })
+    }
 
     const { error } = await supabaseAdmin
-      .from('restoranlar')
-      .update({ ad, slug, aciklama, logo_url, tema_renk })
-      .eq('id', id)
+     .from('restoranlar')
+     .update({
+        ad,
+        slug,
+        aciklama: aciklama || null,
+        logo_url: logo_url || null,
+        tema_renk: tema_renk || '#f59e0b'
+      })
+     .eq('id', id)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) {
+      console.log('Supabase Error:', error)
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
     return NextResponse.json({ success: true })
-  } catch (err) {
-    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 })
+  } catch (err: any) {
+    console.log('Catch Error:', err)
+    return NextResponse.json({ error: 'Sunucu hatası', detay: err.message }, { status: 500 })
   }
 }

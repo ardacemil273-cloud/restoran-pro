@@ -31,17 +31,19 @@ export default function AyarlarPage() {
     if (!user) return router.push('/login')
 
     const { data, error } = await supabase
-    .from('restoranlar')
-    .select('*')
-    .eq('sahibi_id', user.id)
-    .single()
+     .from('restoranlar')
+     .select('*')
+     .eq('sahibi_id', user.id)
+     .single()
 
     if (error) {
       toast.error('Restoran bulunamadı')
+      console.log('Supabase Error:', error)
       return
     }
 
     if (data) {
+      console.log('RESTORAN DATA:', data) // kontrol için
       setRestoran(data)
       setAd(data.ad || '')
       setSlug(data.slug || '')
@@ -65,8 +67,8 @@ export default function AyarlarPage() {
     const fileName = `${restoran.id}-${Date.now()}.${fileExt}`
 
     const { error: uploadError } = await supabase.storage
-    .from('logo')
-    .upload(fileName, file, { upsert: true })
+     .from('logo')
+     .upload(fileName, file, { upsert: true })
 
     if (uploadError) {
       toast.error('Logo yüklenemedi: ' + uploadError.message)
@@ -75,8 +77,8 @@ export default function AyarlarPage() {
     }
 
     const { data: { publicUrl } } = supabase.storage
-    .from('logo')
-    .getPublicUrl(fileName)
+     .from('logo')
+     .getPublicUrl(fileName)
 
     setLogoUrl(publicUrl)
     setUploading(false)
@@ -90,30 +92,37 @@ export default function AyarlarPage() {
     }
 
     if (!restoran?.id) {
-      toast.error('Restoran bulunamadı')
+      toast.error('Restoran ID bulunamadı')
+      console.log('restoran state:', restoran)
       return
     }
 
     setKaydediyor(true)
 
+    const payload = {
+      id: restoran.id,
+      ad,
+      slug,
+      aciklama,
+      logo_url: logoUrl,
+      tema_renk: temaRenk
+    }
+
+    console.log('GONDERILEN:', payload) // debug
+
     const res = await fetch('/api/ayarlar/guncelle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: restoran.id,
-        ad,
-        slug,
-        aciklama,
-        logo_url: logoUrl,
-        tema_renk: temaRenk
-      })
+      body: JSON.stringify(payload)
     })
 
     const data = await res.json()
+    console.log('API CEVAP:', data) // debug
+
     setKaydediyor(false)
 
     if (!res.ok) {
-      toast.error('Kaydedilemedi: ' + data.error)
+      toast.error('Kaydedilemedi: ' + (data.error || 'Bilinmeyen hata'))
       return
     }
 
@@ -146,7 +155,6 @@ export default function AyarlarPage() {
 
         <Card className="p-6 bg-zinc-800 border-zinc-700">
           <div className="space-y-6">
-            {/* Logo */}
             <div>
               <Label className="mb-2 block">Logo</Label>
               <div className="flex items-center gap-4">
@@ -172,7 +180,6 @@ export default function AyarlarPage() {
               </div>
             </div>
 
-            {/* Restoran Adı */}
             <div>
               <Label htmlFor="ad">Restoran Adı *</Label>
               <Input
@@ -184,7 +191,6 @@ export default function AyarlarPage() {
               />
             </div>
 
-            {/* Slug */}
             <div>
               <Label htmlFor="slug">Menü Linki (Slug) *</Label>
               <Input
@@ -197,7 +203,6 @@ export default function AyarlarPage() {
               <p className="text-xs text-zinc-400 mt-1">Sadece küçük harf, rakam ve tire kullanın</p>
             </div>
 
-            {/* Açıklama */}
             <div>
               <Label htmlFor="aciklama">Açıklama</Label>
               <Textarea
@@ -210,7 +215,6 @@ export default function AyarlarPage() {
               />
             </div>
 
-            {/* Tema Rengi */}
             <div>
               <Label htmlFor="renk">Tema Rengi</Label>
               <div className="flex items-center gap-3">
@@ -229,7 +233,6 @@ export default function AyarlarPage() {
               </div>
             </div>
 
-            {/* Menü Linki */}
             {slug && (
               <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-700">
                 <p className="text-sm text-zinc-400 mb-2">Müşteri Menü Linkin:</p>
