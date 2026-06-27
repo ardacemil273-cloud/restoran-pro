@@ -31,13 +31,12 @@ export default function MenuPage() {
   const [masa, setMasa] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [siparisGonderiliyor, setSiparisGonderiliyor] = useState(false)
-  const [odemeYontemi, setOdemeYontemi] = useState('nakit') // YENİ
+  const [odemeYontemi, setOdemeYontemi] = useState('nakit')
 
   useEffect(() => {
     loadMenu()
   }, [slug, masaAd])
 
-  // TEMA RENGİNİ CSS VARIABLE YAP - YENİ
   useEffect(() => {
     if (restoran?.tema_renk) {
       const renk = restoran.tema_renk.replace(/'/g, '')
@@ -49,10 +48,10 @@ export default function MenuPage() {
     setLoading(true)
 
     const { data: restoranData, error: restoranError } = await supabase
-     .from('restoranlar')
-     .select('*')
-     .eq('slug', slug)
-     .single()
+   .from('restoranlar')
+   .select('*')
+   .eq('slug', slug)
+   .single()
 
     if (restoranError ||!restoranData) {
       toast.error('Restoran bulunamadı')
@@ -65,25 +64,29 @@ export default function MenuPage() {
     if (masaAd) {
       const masaAdiNormalize = masaAd.replace(/[-_]/g, ' ').trim()
 
-      const { data: masaData } = await supabase
-       .from('masalar')
-       .select('*')
-       .eq('restoran_id', restoranData.id)
-       .ilike('ad', masaAdiNormalize)
-       .maybeSingle()
+      const { data: masaData, error: masaError } = await supabase
+     .from('masalar')
+     .select('*')
+     .eq('restoran_id', restoranData.id)
+     .ilike('ad', masaAdiNormalize)
+     .maybeSingle()
+
+      console.log('MASA ARAMA:', masaAd, 'SONUC:', masaData, masaError)
 
       if (masaData) {
         setMasa(masaData)
       } else {
-        toast.error(`Masa bulunamadı: ${masaAd}`)
+        toast.error(`Masa bulunamadı: ${masaAd}. QR kodu tekrar okutun.`)
       }
+    } else {
+      console.log('URLde masa parametresi yok')
     }
 
     const { data: kategorilerData } = await supabase
-     .from('kategoriler')
-     .select('*')
-     .eq('restoran_id', restoranData.id)
-     .order('sira')
+   .from('kategoriler')
+   .select('*')
+   .eq('restoran_id', restoranData.id)
+   .order('sira')
 
     setKategoriler(kategorilerData || [])
     if (kategorilerData && kategorilerData.length > 0) {
@@ -91,11 +94,11 @@ export default function MenuPage() {
     }
 
     const { data: urunlerData } = await supabase
-     .from('urunler')
-     .select('*')
-     .eq('restoran_id', restoranData.id)
-     .eq('aktif', true)
-     .order('ad')
+   .from('urunler')
+   .select('*')
+   .eq('restoran_id', restoranData.id)
+   .eq('aktif', true)
+   .order('ad')
 
     setUrunler(urunlerData || [])
     setLoading(false)
@@ -107,7 +110,7 @@ export default function MenuPage() {
       if (varMi) {
         return prev.map(item =>
           item.id === urun.id
-       ? {...item, adet: item.adet + 1 }
+     ? {...item, adet: item.adet + 1 }
             : item
         )
       }
@@ -149,6 +152,11 @@ export default function MenuPage() {
   }
 
   async function siparisVer() {
+    console.log('SIPARIS VER TIKLANDI')
+    console.log('MASA:', masa)
+    console.log('SEPET:', sepet)
+    console.log('RESTORAN:', restoran)
+
     if (!masa) {
       toast.error('Masa seçilmedi. QR kodu tekrar okutun')
       return
@@ -157,26 +165,38 @@ export default function MenuPage() {
       toast.error('Sepet boş')
       return
     }
+    if (!restoran) {
+      toast.error('Restoran bilgisi yok')
+      return
+    }
 
     setSiparisGonderiliyor(true)
 
     const toplam = sepet.reduce((sum, item) => sum + item.fiyat * item.adet, 0)
 
+    const payload = {
+      restoran_id: restoran.id,
+      masa_id: masa.id,
+      toplam_tutar: toplam,
+      durum: 'hazirlaniyor',
+      odeme_yontemi: odemeYontemi
+    }
+
+    console.log('GONDERILEN PAYLOAD:', payload)
+
     const { data: siparis, error: siparisError } = await supabase
-     .from('siparisler')
-     .insert({
-        restoran_id: restoran.id,
-        masa_id: masa.id,
-        toplam_tutar: toplam,
-        durum: 'hazirlaniyor',
-        odeme_yontemi: odemeYontemi // YENİ
-      })
-     .select()
-     .single()
+   .from('siparisler')
+   .insert(payload)
+   .select()
+   .single()
+
+    console.log('SUPABASE SIPARIS CEVAP:', siparis)
+    console.log('SUPABASE HATA:', siparisError)
 
     if (siparisError) {
       setSiparisGonderiliyor(false)
       toast.error('Sipariş oluşturulamadı: ' + siparisError.message)
+      console.error('HATA DETAY:', siparisError)
       return
     }
 
@@ -188,19 +208,20 @@ export default function MenuPage() {
     }))
 
     const { error: urunError } = await supabase
-     .from('siparis_urunleri')
-     .insert(siparisUrunleri)
+   .from('siparis_urunleri')
+   .insert(siparisUrunleri)
 
     if (urunError) {
       setSiparisGonderiliyor(false)
-      toast.error('Ürünler eklenemedi')
+      toast.error('Ürünler eklenemedi: ' + urunError.message)
+      console.error('URUN HATA:', urunError)
       return
     }
 
     await supabase
-     .from('masalar')
-     .update({ durum: 'dolu' })
-     .eq('id', masa.id)
+   .from('masalar')
+   .update({ durum: 'dolu' })
+   .eq('id', masa.id)
 
     setSiparisGonderiliyor(false)
     setSepet([])
@@ -226,9 +247,9 @@ export default function MenuPage() {
     )
   }
 
-  const temaRenk = restoran?.tema_renk?.replace(/'/g, '') || '#f59e0b' // YENİ
+  const temaRenk = restoran?.tema_renk?.replace(/'/g, '') || '#f59e0b'
   const filtrelenmisUrunler = aktifKategori
-   ? urunler.filter(u => u.kategori_id === aktifKategori)
+ ? urunler.filter(u => u.kategori_id === aktifKategori)
     : urunler
 
   const toplamTutar = sepet.reduce((sum, item) => sum + item.fiyat * item.adet, 0)
@@ -238,8 +259,10 @@ export default function MenuPage() {
     <div className="min-h-screen bg-zinc-900 text-white pb-24">
       <div className="sticky top-0 bg-zinc-900 border-b border-zinc-800 p-4 z-10">
         <h1 style={{ color: temaRenk }} className="text-2xl font-bold">{restoran.ad}</h1>
-        {masa && (
+        {masa? (
           <p style={{ color: temaRenk }} className="text-sm mt-1 font-bold">📍 {masa.ad}</p>
+        ) : (
+          <p className="text-sm mt-1 text-red-400 font-bold">⚠️ Masa seçilmedi - QR okutun</p>
         )}
       </div>
 
@@ -254,7 +277,7 @@ export default function MenuPage() {
               }}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition ${
                 aktifKategori === kat.id
-                 ? 'text-white'
+               ? 'text-white'
                   : 'bg-zinc-800 text-zinc-300'
               }`}
             >
@@ -378,7 +401,6 @@ export default function MenuPage() {
             </div>
 
             <div className="p-4 border-t border-zinc-800 bg-zinc-900">
-              {/* ÖDEME YÖNTEMİ - YENİ */}
               <div className="mb-4">
                 <Label className="text-zinc-200 mb-2 block">Ödeme Yöntemi</Label>
                 <select
