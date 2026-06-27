@@ -9,10 +9,10 @@ const supabaseAdmin = createClient(
 export async function POST(request: Request) {
   try {
     const { id, ad, slug, aciklama, logo_url, tema_renk } = await request.json()
+if (!id || !ad || !slug) {
+  return NextResponse.json({ error: 'ID, ad ve slug zorunlu' }, { status: 400 })
+}
 
-    if (!id || !ad || !slug) {
-      return NextResponse.json({ error: 'ID, ad ve slug zorunlu' }, { status: 400 })
-    }
 
     const { error } = await supabaseAdmin
       .from('restoranlar')
