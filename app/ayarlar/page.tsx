@@ -26,15 +26,20 @@ export default function AyarlarPage() {
     loadData()
   }, [])
 
+  // TEMA RENGİNİ ANINDA UYGULA
+  useEffect(() => {
+    document.documentElement.style.setProperty('--tema', temaRenk)
+  }, [temaRenk])
+
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return router.push('/login')
 
     const { data, error } = await supabase
-    .from('restoranlar')
-    .select('*')
-    .eq('sahibi_id', user.id)
-    .single()
+   .from('restoranlar')
+   .select('*')
+   .eq('sahibi_id', user.id)
+   .single()
 
     if (error) {
       toast.error('Restoran bulunamadı')
@@ -49,7 +54,6 @@ export default function AyarlarPage() {
       setSlug(data.slug || '')
       setAciklama(data.aciklama || '')
       setLogoUrl(data.logo_url || '')
-      // Tırnakları temizle, yoksa default ver
       setTemaRenk(data.tema_renk?.replace(/'/g, '') || '#f59e0b')
     }
   }
@@ -68,8 +72,8 @@ export default function AyarlarPage() {
     const fileName = `${restoran.id}-${Date.now()}.${fileExt}`
 
     const { error: uploadError } = await supabase.storage
-    .from('logo')
-    .upload(fileName, file, { upsert: true })
+   .from('logo')
+   .upload(fileName, file, { upsert: true })
 
     if (uploadError) {
       toast.error('Logo yüklenemedi: ' + uploadError.message)
@@ -78,8 +82,8 @@ export default function AyarlarPage() {
     }
 
     const { data: { publicUrl } } = supabase.storage
-    .from('logo')
-    .getPublicUrl(fileName)
+   .from('logo')
+   .getPublicUrl(fileName)
 
     setLogoUrl(publicUrl)
     setUploading(false)
@@ -152,9 +156,14 @@ export default function AyarlarPage() {
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Restoran Ayarları</h1>
+        <h1 style={{ color: temaRenk }} className="text-3xl font-bold mb-6">
+          Restoran Ayarları
+        </h1>
 
-        <Card className="p-6 bg-zinc-800 border-zinc-700">
+        <Card
+          style={{ borderColor: temaRenk + '40' }}
+          className="p-6 bg-zinc-800 border-zinc-700"
+        >
           <div className="space-y-6">
             <div>
               <Label className="mb-2 block">Logo</Label>
@@ -241,11 +250,20 @@ export default function AyarlarPage() {
             </div>
 
             {slug && (
-              <div className="p-4 bg-zinc-900 rounded-lg border border-zinc-700">
+              <div
+                style={{ borderColor: temaRenk + '40' }}
+                className="p-4 bg-zinc-900 rounded-lg border"
+              >
                 <p className="text-sm text-zinc-400 mb-2">Müşteri Menü Linkin:</p>
                 <div className="flex items-center gap-2">
                   <Input value={menuLink} readOnly className="bg-zinc-800 border-zinc-600 text-sm" />
-                  <Button onClick={linkKopyala} size="icon" variant="outline" className="shrink-0">
+                  <Button
+                    onClick={linkKopyala}
+                    size="icon"
+                    variant="outline"
+                    className="shrink-0"
+                    style={{ borderColor: temaRenk }}
+                  >
                     <Copy className="w-4 h-4" />
                   </Button>
                 </div>
@@ -255,7 +273,8 @@ export default function AyarlarPage() {
             <Button
               onClick={kaydet}
               disabled={kaydediyor || uploading ||!ad ||!slug}
-              className="w-full bg-yellow-500 text-black hover:bg-yellow-600 font-bold"
+              style={{ backgroundColor: temaRenk }}
+              className="w-full text-white hover:opacity-80 font-bold"
             >
               <Save className="w-4 h-4 mr-2" />
               {kaydediyor? 'Kaydediliyor...' : 'Kaydet'}
