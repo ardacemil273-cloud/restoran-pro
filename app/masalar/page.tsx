@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { PAKETLER, paketKontrol } from '@/lib/paketler'
-import { QrCode, Receipt, Download, Plus, Trash2, GripVertical } from 'lucide-react'
+import { QrCode, Receipt, Download, Plus, Trash2, GripVertical, Phone } from 'lucide-react'
 import QRCode from 'qrcode'
 import {
   DndContext,
@@ -380,6 +380,16 @@ export default function MasalarPage() {
             >
               <QrCode className="w-4 h-4 mr-2" />
               QR Kodlar
+            </Button>
+          )}
+
+          {paketKontrol(paketTuru, 'garson_panel') && (
+            <Button
+              onClick={() => router.push('/aramalar')}
+              className="bg-green-600 text-white font-bold hover:bg-green-700"
+            >
+              <Phone className="w-4 h-4 mr-2" />
+              Aramalar
             </Button>
           )}
 
