@@ -6,11 +6,12 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users,
   TrendingDown, Brain, Warehouse, CalendarDays, Tag, UtensilsCrossed, ChefHat, Menu, X,
-  DollarSign, ChevronDown, ChevronRight, Layers
+  DollarSign, ChevronDown, ChevronRight, Layers, MapPin
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PwaInstall from '@/components/PwaInstall'
 import StokUyari from '@/components/StokUyari'
+import { OnboardingTour } from '@/components/OnboardingTour'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       items: [
         { ad: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { ad: 'Masalar', path: '/masalar', icon: ChefHat },
+        { ad: 'Masa Haritası', path: '/masa-harita', icon: MapPin },
         { ad: 'Siparişler', path: '/siparisler', icon: ShoppingCart },
         { ad: 'Kasa', path: '/kasa', icon: DollarSign },
         { ad: 'Gelen Aramalar', path: '/aramalar', icon: Phone },
@@ -249,6 +251,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* Main Content */}
           <main className="flex-1 pt-14 lg:pt-0 lg:ml-60 overflow-auto min-h-screen">
             {user && <StokUyari />}
+            {user && <OnboardingTour />}
             {children}
           </main>
         </div>
