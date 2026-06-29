@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Download, X, Smartphone, AlertCircle } from 'lucide-react'
+import { Download, X, Smartphone } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 
@@ -16,6 +16,7 @@ export default function PwaInstall() {
   const [isInstalled, setIsInstalled] = useState(false)
   const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const [isInstalling, setIsInstalling] = useState(false)
+  const [dismissCount, setDismissCount] = useState(0)
 
   useEffect(() => {
     // iOS kontrolü
@@ -33,16 +34,20 @@ export default function PwaInstall() {
       return
     }
 
+    // localStorage'dan dismiss count'u oku
+    const savedDismissCount = localStorage.getItem('pwa_dismiss_count')
+    setDismissCount(savedDismissCount ? parseInt(savedDismissCount) : 0)
+
     // beforeinstallprompt event'ini yakala
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       const event = e as BeforeInstallPromptEvent
       setDeferredPrompt(event)
       
-      // 4 saniye sonra göster
+      // 3 saniye sonra göster
       const timer = setTimeout(() => {
         setShowPrompt(true)
-      }, 4000)
+      }, 3000)
 
       return () => clearTimeout(timer)
     }
@@ -51,7 +56,7 @@ export default function PwaInstall() {
     if (isIOSDevice) {
       const iosTimer = setTimeout(() => {
         setShowIOSPrompt(true)
-      }, 4000)
+      }, 3000)
       return () => clearTimeout(iosTimer)
     }
 
@@ -65,6 +70,7 @@ export default function PwaInstall() {
       setShowIOSPrompt(false)
       setIsInstalling(false)
       setDeferredPrompt(null)
+      localStorage.removeItem('pwa_dismiss_count')
       toast.success('✅ Uygulama başarıyla yüklendi!')
     }
 
@@ -95,6 +101,7 @@ export default function PwaInstall() {
         toast.success('✅ Uygulama yükleniyor...')
         setDeferredPrompt(null)
         setShowPrompt(false)
+        localStorage.removeItem('pwa_dismiss_count')
       } else {
         toast.info('Yükleme iptal edildi')
         setIsInstalling(false)
@@ -103,6 +110,21 @@ export default function PwaInstall() {
       console.error('Install error:', err)
       toast.error('Yükleme başarısız: ' + (err?.message || 'Bilinmeyen hata'))
       setIsInstalling(false)
+    }
+  }
+
+  const handleDismiss = () => {
+    const newCount = dismissCount + 1
+    setDismissCount(newCount)
+    localStorage.setItem('pwa_dismiss_count', newCount.toString())
+    setShowPrompt(false)
+    
+    // 3 sayfa geçişinden sonra tekrar göster
+    if (newCount < 3) {
+      const timer = setTimeout(() => {
+        setShowPrompt(true)
+      }, 30000) // 30 saniye sonra tekrar göster
+      return () => clearTimeout(timer)
     }
   }
 
@@ -152,8 +174,8 @@ export default function PwaInstall() {
     )
   }
 
-  // Android ve diğer tarayıcılar için
-  if (!isIOS && showPrompt) {
+  // Android ve diğer tarayıcılar için - Kalıcı ve tekrar görünen
+  if (!isIOS && showPrompt && dismissCount < 3) {
     return (
       <AnimatePresence>
         <motion.div
@@ -202,17 +224,24 @@ export default function PwaInstall() {
                     )}
                   </button>
                   <button
-                    onClick={() => setShowPrompt(false)}
+                    onClick={handleDismiss}
                     disabled={isInstalling}
                     className="px-3 py-2.5 text-white/30 hover:text-white transition-all text-xs font-bold disabled:opacity-50"
                   >
                     DAHA SONRA
                   </button>
                 </div>
+
+                {/* Dismiss Counter */}
+                {dismissCount > 0 && (
+                  <p className="text-[10px] text-white/30 text-center mt-2">
+                    ({3 - dismissCount} hatırlatma kaldı)
+                  </p>
+                )}
               </div>
               
               <button
-                onClick={() => setShowPrompt(false)}
+                onClick={handleDismiss}
                 disabled={isInstalling}
                 className="absolute top-2 right-2 p-1 text-white/20 hover:text-white transition-all disabled:opacity-50"
               >
