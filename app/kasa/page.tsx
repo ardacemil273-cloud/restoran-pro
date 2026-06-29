@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -216,19 +217,25 @@ export default function KasaPage() {
 
   if (yukleniyor) {
     return (
-      <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-500 mx-auto mb-3" />
-          <p className="text-zinc-400">Yükleniyor...</p>
+      <div className="p-6 bg-zinc-900 min-h-screen">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-8 w-8 bg-zinc-700 rounded-lg animate-pulse" />
+          <div className="h-7 w-20 bg-zinc-700 rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          {[1,2,3].map(i => <div key={i} className="h-24 bg-zinc-800 rounded-xl animate-pulse" />)}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-40 bg-zinc-800 rounded-xl animate-pulse" />)}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-zinc-100 p-6">
+    <div className="min-h-screen bg-zinc-900 text-zinc-100 p-4 md:p-6">
       {/* Başlık */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-black flex items-center gap-2" style={{ color: temaRenk }}>
             <DollarSign className="w-7 h-7" />
@@ -270,7 +277,7 @@ export default function KasaPage() {
             Sipariş Ekle
           </Button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Ciro Kartları */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

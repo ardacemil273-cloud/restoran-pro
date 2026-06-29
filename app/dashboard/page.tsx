@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -122,10 +123,19 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 flex items-center justify-center">
-        <div className="text-center fade-in">
-          <div className="w-16 h-16 mx-auto mb-4 shimmer rounded-full border-4 border-yellow-500/30" />
-          <p className="text-zinc-300 font-semibold">Restoran Pro yükleniyor...</p>
+      <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 p-6">
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-14 h-14 bg-zinc-700 rounded-2xl animate-pulse" />
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-zinc-700 rounded animate-pulse" />
+            <div className="h-4 w-32 bg-zinc-700 rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[1,2,3,4].map(i => <div key={i} className="h-32 bg-zinc-800 rounded-2xl animate-pulse" />)}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-24 bg-zinc-800 rounded-xl animate-pulse" />)}
         </div>
       </div>
     )
@@ -134,7 +144,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 p-6 space-y-8">
       {/* Başlık Bölümü */}
-      <div className="fade-in">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-4 mb-2">
           <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-500/30">
             <ChefHat className="w-8 h-8 text-white" />
@@ -148,10 +158,10 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Ana İstatistikler - Premium Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 fade-in">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Aktif Siparişler */}
         <div 
           onClick={() => router.push('/siparisler')}
@@ -239,10 +249,10 @@ export default function DashboardPage() {
             <p className="text-xs text-red-400 mt-2 font-semibold">⚠️ Dikkat gerekiyor!</p>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* İkinci Satır İstatistikler */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 fade-in">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Rezervasyon */}
         <div 
           onClick={() => router.push('/rezervasyon')}
@@ -290,10 +300,10 @@ export default function DashboardPage() {
           <p className="text-2xl font-black text-white">AI</p>
           <p className="text-zinc-400 text-sm mt-2">Yapay zeka önerileri</p>
         </div>
-      </div>
+      </motion.div>
 
       {/* Son Siparişler & Hızlı Erişim */}
-      <div className="grid lg:grid-cols-3 gap-6 fade-in">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="grid lg:grid-cols-3 gap-6">
         {/* Son Siparişler */}
         <div className="lg:col-span-1">
           <div className="flex items-center justify-between mb-4">
@@ -373,7 +383,7 @@ export default function DashboardPage() {
             })}
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
