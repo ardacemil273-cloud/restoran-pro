@@ -325,7 +325,7 @@ export default function MutfakPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filtreliSiparisler.map(siparis => {
-              const urunler = JSON.parse(siparis.urunler || '[]')
+              const urunler = Array.isArray(siparis.urunler) ? siparis.urunler : JSON.parse(typeof siparis.urunler === 'string' ? (siparis.urunler || '[]') : '[]')
               const dakika = Math.floor((Date.now() - new Date(siparis.created_at).getTime()) / 60000)
               const acil = dakika >= 10 && siparis.durum === 'bekliyor'
 

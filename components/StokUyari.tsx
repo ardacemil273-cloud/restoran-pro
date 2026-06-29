@@ -14,30 +14,31 @@ type StokUyariItem = {
   durum: 'tukendi' | 'kritik'
 }
 
-export default function StokUyari({ restoranId }: { restoranId: string }) {
+export default function StokUyari() {
   const [uyarilar, setUyarilar] = useState<StokUyariItem[]>([])
   const [kapali, setKapali] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    if (!restoranId) return
     loadUyarilar()
-  }, [restoranId])
+  }, [])
 
   const loadUyarilar = async () => {
-    const { data } = await supabase
-      .from('urunler')
-      .select('id, ad, stok, kritik_stok, stok_birimi')
-      .eq('restoran_id', restoranId)
-      .eq('aktif', true)
-      .not('stok', 'is', null)
-      .lte('stok', supabase.rpc as any) // Workaround: filter in JS
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-    // Tüm stok takipli ürünleri çek, JS'de filtrele
+    const { data: restoranData } = await supabase
+      .from('restoranlar')
+      .select('id')
+      .eq('sahibi_id', user.id)
+      .single()
+
+    if (!restoranData) return
+
     const { data: tumUrunler } = await supabase
       .from('urunler')
       .select('id, ad, stok, kritik_stok, stok_birimi')
-      .eq('restoran_id', restoranId)
+      .eq('restoran_id', restoranData.id)
       .eq('aktif', true)
       .not('stok', 'is', null)
 
@@ -56,13 +57,13 @@ export default function StokUyari({ restoranId }: { restoranId: string }) {
   if (kapali || uyarilar.length === 0) return null
 
   return (
-    <div className="bg-red-950/60 border border-red-700 rounded-lg p-4 mb-4">
+    <div className="bg-red-950/60 border border-red-700 rounded-lg p-4 mx-4 mt-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 flex-1">
           <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="font-bold text-red-300 text-sm mb-2">
-              ⚠️ Stok Uyarısı — {uyarilar.length} ürün kritik seviyede!
+              Stok Uyarısı — {uyarilar.length} ürün kritik seviyede!
             </p>
             <div className="flex flex-wrap gap-2">
               {uyarilar.map(u => (

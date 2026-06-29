@@ -342,7 +342,7 @@ export default function MasalarPage() {
 
   return (
     <div className="p-6 bg-zinc-900 min-h-screen">
-      {restoran && <StokUyari restoranId={restoran.id} />}
+      {restoran && <StokUyari />}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Masalar - {restoran?.ad}</h1>
