@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import { type OzellikAdi, type OzellikAyarlari } from '@/hooks/useFeatureFlags'
+import { useScrollPreservation } from '@/hooks/useScrollPreservation'
 
 const OZELLIK_LISTESI: {
   id: OzellikAdi
@@ -145,6 +146,8 @@ export default function AyarlarPage() {
   const [uploading, setUploading] = useState(false)
   const [kaydediyor, setKaydediyor] = useState(false)
   const [aktifSekme, setAktifSekme] = useState<'genel' | 'ozellikler'>('genel')
+  const { saveScrollPosition, restoreScrollPosition } = useScrollPreservation()
+  const sekmeContainerRef = useRef<HTMLDivElement>(null)
   const [ozellikAyarlari, setOzellikAyarlari] = useState<OzellikAyarlari>({} as OzellikAyarlari)
   const [ozellikKaydediyor, setOzellikKaydediyor] = useState(false)
   const [degisiklikVar, setDegisiklikVar] = useState(false)
@@ -320,7 +323,10 @@ export default function AyarlarPage() {
         {/* Sekme Navigasyonu */}
         <div className="flex gap-1 mb-6 bg-zinc-800 p-1 rounded-xl border border-zinc-700">
           <button
-            onClick={() => setAktifSekme('genel')}
+            onClick={() => {
+              saveScrollPosition()
+              setAktifSekme('genel')
+            }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-bold transition-all ${
               aktifSekme === 'genel'
                 ? 'bg-zinc-700 text-white shadow'
@@ -331,7 +337,10 @@ export default function AyarlarPage() {
             Genel Ayarlar
           </button>
           <button
-            onClick={() => setAktifSekme('ozellikler')}
+            onClick={() => {
+              saveScrollPosition()
+              setAktifSekme('ozellikler')
+            }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-bold transition-all relative ${
               aktifSekme === 'ozellikler'
                 ? 'bg-yellow-500/20 text-yellow-400 shadow border border-yellow-500/30'
