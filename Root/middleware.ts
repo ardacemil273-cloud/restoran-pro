@@ -56,7 +56,7 @@ export async function middleware(req: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession()
 
-  const publicPaths = ['/login', '/register', '/menu']
+  const publicPaths = ['/login', '/register', '/menu', '/garson']
   const isPublic = publicPaths.some(path => req.nextUrl.pathname.startsWith(path))
 
   if (!session && !isPublic) {
@@ -65,6 +65,10 @@ export async function middleware(req: NextRequest) {
 
   if (session && req.nextUrl.pathname === '/login') {
     return NextResponse.redirect(new URL('/masalar', req.url))
+  }
+
+  if (session && req.nextUrl.pathname === '/garson/giris') {
+    return NextResponse.redirect(new URL('/garson', req.url))
   }
 
   return res

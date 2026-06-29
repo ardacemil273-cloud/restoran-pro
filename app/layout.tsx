@@ -15,6 +15,7 @@ import { OnboardingTour } from '@/components/OnboardingTour'
 import { PremiumUX } from '@/components/PremiumUX'
 import { Toaster } from '@/components/ui/sonner'
 import { useMobileMenu } from '@/hooks/useMobileMenu'
+import PwaPrompt from '@/components/PwaPrompt'
 import './globals.css'
 import './globals-mobile.css'
 
@@ -81,6 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       items: [
         { ad: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { ad: 'Masalar', path: '/masalar', icon: ChefHat },
+        { ad: 'Garson Paneli', path: '/garson', icon: UtensilsCrossed },
         { ad: 'Masa Haritası', path: '/masa-harita', icon: MapPin },
         { ad: 'Siparişler', path: '/siparisler', icon: ShoppingCart },
         { ad: 'WhatsApp Siparişler', path: '/whatsapp-siparisler', icon: MessageCircle },
@@ -247,6 +249,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-zinc-900 text-white">
         <PwaInstall />
+        <PwaPrompt />
         <Toaster richColors position="top-right" />
 
         {/* Mobil Header */}
