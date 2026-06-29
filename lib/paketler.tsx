@@ -1,12 +1,21 @@
+// Paket sistemi - ödeme entegrasyonu hazır ama henüz aktif değil
+// Şu an tüm özellikler tüm kullanıcılara açık (beta dönemi)
+
 export const PAKETLER = {
   basit: {
     ad: 'Basit',
     fiyat: 0,
     ozellikler: {
       garson_panel: true,
-      kasa: false,
-      qr_menu: false,
-      rapor: false,
+      kasa: true,
+      qr_menu: true,
+      rapor: true,
+      ai_analiz: true,
+      rezervasyon: true,
+      stok: true,
+      gider: true,
+      musteriler: true,
+      indirimler: true,
       sinirsiz_masa: false,
       sinirsiz_urun: false
     },
@@ -23,6 +32,12 @@ export const PAKETLER = {
       kasa: true,
       qr_menu: true,
       rapor: false,
+      ai_analiz: false,
+      rezervasyon: true,
+      stok: true,
+      gider: true,
+      musteriler: true,
+      indirimler: true,
       sinirsiz_masa: true,
       sinirsiz_urun: true
     },
@@ -39,6 +54,12 @@ export const PAKETLER = {
       kasa: true,
       qr_menu: true,
       rapor: true,
+      ai_analiz: true,
+      rezervasyon: true,
+      stok: true,
+      gider: true,
+      musteriler: true,
+      indirimler: true,
       sinirsiz_masa: true,
       sinirsiz_urun: true
     },
@@ -50,5 +71,8 @@ export const PAKETLER = {
 }
 
 export function paketKontrol(paketTuru: string, ozellik: string) {
-  return PAKETLER[paketTuru as keyof typeof PAKETLER]?.ozellikler[ozellik as keyof typeof PAKETLER.basit.ozellikler] || false
+  // Şu an beta: tüm özellikler açık
+  return true
+  // Gerçek kontrol (ödeme aktif olduğunda):
+  // return PAKETLER[paketTuru as keyof typeof PAKETLER]?.ozellikler[ozellik as keyof typeof PAKETLER.basit.ozellikler] || false
 }

@@ -169,21 +169,32 @@ export default function RezervasyonPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <CalendarDays className="text-blue-400" />
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <CalendarDays className="w-7 h-7 text-blue-400" />
             Rezervasyon
           </h1>
           <p className="text-zinc-400 text-sm mt-1">{restoran?.ad}</p>
         </div>
-        <Button
-          onClick={() => setEkleModal(true)}
-          className="bg-yellow-500 text-black hover:bg-yellow-400 font-bold"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Rezervasyon Ekle
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Dashboard
+          </Button>
+          <Button onClick={() => router.push('/masalar')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <Users className="w-4 h-4 mr-1.5" />
+            Masalar
+          </Button>
+          <Button
+            onClick={() => setEkleModal(true)}
+            className="bg-yellow-500 text-black hover:bg-yellow-400 font-bold"
+            size="sm"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            Rezervasyon Ekle
+          </Button>
+        </div>
       </div>
 
       {/* Tarih Navigasyonu */}

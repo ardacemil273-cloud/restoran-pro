@@ -7,23 +7,18 @@ import { Button } from '@/components/ui/button'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { PAKETLER } from '@/lib/paketler'
+import { Check, X, Clock, Shield, Zap, Crown } from 'lucide-react'
 
 function PaketIcerik() {
   const { restoran, loading: restoranLoading } = useRestoran()
-  const [iframeToken, setIframeToken] = useState<string | null>(null)
-  const [odemeLoading, setOdemeLoading] = useState(false)
-  const [secilenPaket, setSecilenPaket] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // PayTR'den dönen sonuç
   useEffect(() => {
     const sonuc = searchParams.get('sonuc')
     const paket = searchParams.get('paket')
-
     if (sonuc === 'basarili' && paket) {
       toast.success(`${PAKETLER[paket as keyof typeof PAKETLER]?.ad} pakete geçildi! 🎉`)
-      // URL'i temizle
       router.replace('/ayarlar/paket')
     } else if (sonuc === 'hata') {
       toast.error('Ödeme başarısız. Tekrar deneyin.')
@@ -31,43 +26,10 @@ function PaketIcerik() {
     }
   }, [searchParams, router])
 
-  const odemeBaslat = async (paketTuru: string) => {
-    if (!restoran) return
-    setOdemeLoading(true)
-    setSecilenPaket(paketTuru)
-
-    const { data: { user } } = await supabase.auth.getUser()
-
-    const res = await fetch('/api/paytr', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        paketTuru,
-        restoranId: restoran.id,
-        kullaniciEmail: user?.email
-      })
-    })
-
-    const data = await res.json()
-    setOdemeLoading(false)
-
-    if (data.error) {
-      toast.error('Ödeme başlatılamadı: ' + data.error)
-      return
-    }
-
-    setIframeToken(data.iframeToken)
-  }
-
-  const iptalEt = () => {
-    setIframeToken(null)
-    setSecilenPaket(null)
-  }
-
   if (restoranLoading) {
     return (
       <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
-        Yükleniyor...
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500" />
       </div>
     )
   }
@@ -77,12 +39,28 @@ function PaketIcerik() {
     ? new Date(restoran.paket_bitis_tarihi).toLocaleDateString('tr-TR')
     : null
 
+  const paketOzellikleri = [
+    { ad: 'Garson Paneli', basit: true, big: true, pro: true },
+    { ad: 'Kasa & Hızlı Satış', basit: false, big: true, pro: true },
+    { ad: 'QR Menü', basit: false, big: true, pro: true },
+    { ad: 'Stok Takibi', basit: false, big: true, pro: true },
+    { ad: 'Müşteri Yönetimi', basit: false, big: true, pro: true },
+    { ad: 'Rezervasyon', basit: false, big: true, pro: true },
+    { ad: 'Gider Takibi', basit: false, big: true, pro: true },
+    { ad: 'İndirim & Kupon', basit: false, big: true, pro: true },
+    { ad: 'Gelişmiş Raporlama', basit: false, big: false, pro: true },
+    { ad: 'AI Satış Analizi', basit: false, big: false, pro: true },
+    { ad: 'Sınırsız Masa', basit: false, big: true, pro: true },
+    { ad: 'Sınırsız Ürün', basit: false, big: true, pro: true },
+  ]
+
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+      <div className="max-w-5xl mx-auto">
+        {/* Başlık */}
+        <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Paket Yönetimi</h1>
+            <h1 className="text-3xl font-black">Paket Yönetimi</h1>
             <p className="text-zinc-400 mt-1">
               Mevcut Paket:{' '}
               <span className="text-yellow-500 font-bold">
@@ -95,124 +73,167 @@ function PaketIcerik() {
               )}
             </p>
           </div>
-          <Button onClick={() => router.push('/ayarlar')} className="bg-zinc-700">
-            Geri
+          <Button onClick={() => router.push('/ayarlar')} className="bg-zinc-700 hover:bg-zinc-600">
+            ← Geri
           </Button>
         </div>
 
-        {/* PayTR Iframe */}
-        {iframeToken && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl overflow-hidden w-full max-w-lg">
-              <div className="flex justify-between items-center p-4 bg-zinc-800">
-                <span className="text-white font-bold">Güvenli Ödeme</span>
-                <button
-                  onClick={iptalEt}
-                  className="text-zinc-400 hover:text-white text-xl"
-                >
-                  ✕
-                </button>
-              </div>
-              <iframe
-                src={`https://www.paytr.com/odeme/guvenli/${iframeToken}`}
-                width="100%"
-                height="600"
-                frameBorder="0"
-                scrolling="yes"
-                style={{ display: 'block' }}
-              />
+        {/* Beta Banner */}
+        <Card className="p-4 bg-yellow-500/10 border-yellow-500/40 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center shrink-0">
+              <Zap className="w-5 h-5 text-black" />
+            </div>
+            <div>
+              <p className="font-bold text-yellow-400">Beta Döneminde Tüm Özellikler Ücretsiz!</p>
+              <p className="text-sm text-yellow-500/70 mt-0.5">
+                Şu an tüm özellikler tüm kullanıcılara açık. Ödeme sistemi yakında aktif olacak.
+                Mevcut kullanıcılara özel erken kayıt fiyatı sunulacak.
+              </p>
             </div>
           </div>
-        )}
+        </Card>
 
         {/* Paket Kartları */}
-        <div className="grid md:grid-cols-3 gap-4">
-          {Object.entries(PAKETLER).map(([key, paket]) => {
-            const aktif = mevcutPaket === key
-            const daha_ucuz = ['basit'].includes(key) && mevcutPaket !== 'basit'
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          {/* Basit Paket */}
+          <Card className={`p-6 border-2 transition ${mevcutPaket === 'basit' ? 'bg-yellow-500/10 border-yellow-500' : 'bg-zinc-800 border-zinc-700'}`}>
+            {mevcutPaket === 'basit' && (
+              <div className="text-xs text-yellow-500 font-bold mb-2">✓ MEVCUT PAKETİNİZ</div>
+            )}
+            <h2 className="text-2xl font-black mb-1">Basit</h2>
+            <div className="mb-4">
+              <p className="text-3xl font-black text-green-400">Ücretsiz</p>
+              <p className="text-xs text-zinc-500">Sonsuza kadar</p>
+            </div>
+            <div className="space-y-1.5 mb-6 text-sm">
+              <div className="flex items-center gap-2 text-zinc-400"><Check className="w-4 h-4 text-green-500" /> 5 Masa</div>
+              <div className="flex items-center gap-2 text-zinc-400"><Check className="w-4 h-4 text-green-500" /> 20 Ürün</div>
+              <div className="flex items-center gap-2 text-zinc-400"><Check className="w-4 h-4 text-green-500" /> Garson Paneli</div>
+              <div className="flex items-center gap-2 text-zinc-500"><X className="w-4 h-4" /> Kasa</div>
+              <div className="flex items-center gap-2 text-zinc-500"><X className="w-4 h-4" /> QR Menü</div>
+              <div className="flex items-center gap-2 text-zinc-500"><X className="w-4 h-4" /> Raporlama</div>
+            </div>
+            <Button disabled className="w-full bg-zinc-700 text-zinc-400 cursor-default">
+              {mevcutPaket === 'basit' ? 'Aktif Paketiniz' : 'Ücretsiz Plan'}
+            </Button>
+          </Card>
 
-            return (
-              <Card
-                key={key}
-                className={`p-6 border-2 transition ${
-                  aktif
-                    ? 'bg-yellow-500/20 border-yellow-500'
-                    : 'bg-zinc-800 border-zinc-700'
-                }`}
-              >
-                {aktif && (
-                  <div className="text-xs text-yellow-500 font-bold mb-2">
-                    ✓ MEVCUT PAKETİNİZ
-                  </div>
-                )}
+          {/* Big Paket */}
+          <Card className={`p-6 border-2 relative transition ${mevcutPaket === 'big' ? 'bg-yellow-500/10 border-yellow-500' : 'bg-zinc-800 border-yellow-500/50 md:scale-105 shadow-xl shadow-yellow-500/10'}`}>
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-xs font-black px-4 py-1 rounded-full">
+              EN POPÜLER
+            </div>
+            {mevcutPaket === 'big' && (
+              <div className="text-xs text-yellow-500 font-bold mb-2">✓ MEVCUT PAKETİNİZ</div>
+            )}
+            <h2 className="text-2xl font-black mb-1">Big</h2>
+            <div className="mb-4">
+              <p className="text-3xl font-black text-yellow-500">199₺<span className="text-sm text-zinc-400 font-normal">/ay</span></p>
+              <p className="text-xs text-zinc-500">Ödeme sistemi yakında aktif</p>
+            </div>
+            <div className="space-y-1.5 mb-6 text-sm">
+              <div className="flex items-center gap-2 text-zinc-300"><Check className="w-4 h-4 text-green-500" /> Sınırsız Masa</div>
+              <div className="flex items-center gap-2 text-zinc-300"><Check className="w-4 h-4 text-green-500" /> Sınırsız Ürün</div>
+              <div className="flex items-center gap-2 text-zinc-300"><Check className="w-4 h-4 text-green-500" /> Garson Paneli</div>
+              <div className="flex items-center gap-2 text-zinc-300"><Check className="w-4 h-4 text-green-500" /> Kasa & Fiş</div>
+              <div className="flex items-center gap-2 text-zinc-300"><Check className="w-4 h-4 text-green-500" /> QR Menü</div>
+              <div className="flex items-center gap-2 text-zinc-300"><Check className="w-4 h-4 text-green-500" /> Stok & Gider</div>
+              <div className="flex items-center gap-2 text-zinc-500"><X className="w-4 h-4" /> AI Analiz</div>
+            </div>
+            <Button
+              disabled
+              className="w-full bg-yellow-500/30 text-yellow-300 cursor-not-allowed border border-yellow-500/30"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Yakında Aktif
+            </Button>
+          </Card>
 
-                <h2 className="text-2xl font-bold mb-1">{paket.ad}</h2>
-                <p className="text-3xl font-bold text-yellow-500 mb-1">
-                  {paket.fiyat === 0 ? 'Ücretsiz' : `${paket.fiyat}₺`}
-                  {paket.fiyat > 0 && (
-                    <span className="text-sm text-zinc-400">/ay</span>
-                  )}
-                </p>
-
-                <div className="my-4 space-y-2 text-sm border-t border-zinc-700 pt-4">
-                  <div className="flex items-center gap-2">
-                    <span>{paket.ozellikler.garson_panel ? '✅' : '❌'}</span>
-                    <span>Garson Paneli</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span>{paket.ozellikler.kasa ? '✅' : '❌'}</span>
-                    <span>Kasa / Hızlı Satış</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span>{paket.ozellikler.qr_menu ? '✅' : '❌'}</span>
-                    <span>QR Menü</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span>{paket.ozellikler.rapor ? '✅' : '❌'}</span>
-                    <span>Raporlama</span>
-                  </div>
-                  <div className="border-t border-zinc-700 pt-2 mt-2 text-zinc-400">
-                    <p>{paket.limit.masa === 999 ? 'Sınırsız' : paket.limit.masa} Masa</p>
-                    <p>{paket.limit.urun === 999 ? 'Sınırsız' : paket.limit.urun} Ürün</p>
-                  </div>
-                </div>
-
-                {aktif ? (
-                  <Button disabled className="w-full bg-zinc-600 text-zinc-400">
-                    Aktif Paketiniz
-                  </Button>
-                ) : daha_ucuz ? (
-                  <Button disabled className="w-full bg-zinc-700 text-zinc-500">
-                    Düşürülemez
-                  </Button>
-                ) : paket.fiyat === 0 ? (
-                  <Button disabled className="w-full bg-zinc-700 text-zinc-500">
-                    Ücretsiz Plan
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => odemeBaslat(key)}
-                    disabled={odemeLoading && secilenPaket === key}
-                    className="w-full bg-yellow-500 text-black font-bold hover:bg-yellow-600"
-                  >
-                    {odemeLoading && secilenPaket === key
-                      ? 'Yükleniyor...'
-                      : `${paket.ad} Pakete Geç`}
-                  </Button>
-                )}
-              </Card>
-            )
-          })}
+          {/* Pro Paket */}
+          <Card className={`p-6 border-2 transition ${mevcutPaket === 'pro' ? 'bg-yellow-500/10 border-yellow-500' : 'bg-zinc-800 border-purple-500/50'}`}>
+            {mevcutPaket === 'pro' && (
+              <div className="text-xs text-yellow-500 font-bold mb-2">✓ MEVCUT PAKETİNİZ</div>
+            )}
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-2xl font-black">Pro</h2>
+              <Crown className="w-5 h-5 text-purple-400" />
+            </div>
+            <div className="mb-4">
+              <p className="text-3xl font-black text-purple-400">399₺<span className="text-sm text-zinc-400 font-normal">/ay</span></p>
+              <p className="text-xs text-zinc-500">Ödeme sistemi yakında aktif</p>
+            </div>
+            <div className="space-y-1.5 mb-6 text-sm">
+              <div className="flex items-center gap-2 text-zinc-300"><Check className="w-4 h-4 text-green-500" /> Big'deki Her Şey</div>
+              <div className="flex items-center gap-2 text-zinc-300"><Check className="w-4 h-4 text-green-500" /> Gelişmiş Raporlama</div>
+              <div className="flex items-center gap-2 text-zinc-300"><Check className="w-4 h-4 text-green-500" /> AI Satış Analizi</div>
+              <div className="flex items-center gap-2 text-zinc-300"><Check className="w-4 h-4 text-green-500" /> Öncelikli Destek</div>
+            </div>
+            <Button
+              disabled
+              className="w-full bg-purple-500/30 text-purple-300 cursor-not-allowed border border-purple-500/30"
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Yakında Aktif
+            </Button>
+          </Card>
         </div>
 
+        {/* Özellik Karşılaştırma Tablosu */}
+        <Card className="p-6 bg-zinc-800 border-zinc-700 mb-6">
+          <h3 className="font-black text-lg mb-4">Özellik Karşılaştırması</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-700">
+                  <th className="text-left py-2 text-zinc-400 font-medium">Özellik</th>
+                  <th className="text-center py-2 text-zinc-400 font-medium">Basit</th>
+                  <th className="text-center py-2 text-yellow-500 font-bold">Big</th>
+                  <th className="text-center py-2 text-purple-400 font-bold">Pro</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paketOzellikleri.map((ozellik, i) => (
+                  <tr key={i} className="border-b border-zinc-700/50">
+                    <td className="py-2.5 text-zinc-300">{ozellik.ad}</td>
+                    <td className="py-2.5 text-center">
+                      {ozellik.basit
+                        ? <Check className="w-4 h-4 text-green-500 mx-auto" />
+                        : <X className="w-4 h-4 text-zinc-600 mx-auto" />
+                      }
+                    </td>
+                    <td className="py-2.5 text-center">
+                      {ozellik.big
+                        ? <Check className="w-4 h-4 text-green-500 mx-auto" />
+                        : <X className="w-4 h-4 text-zinc-600 mx-auto" />
+                      }
+                    </td>
+                    <td className="py-2.5 text-center">
+                      {ozellik.pro
+                        ? <Check className="w-4 h-4 text-green-500 mx-auto" />
+                        : <X className="w-4 h-4 text-zinc-600 mx-auto" />
+                      }
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
         {/* Bilgi Kutusu */}
-        <Card className="p-4 bg-zinc-800 border-zinc-700 mt-6">
-          <h3 className="font-bold mb-2 text-yellow-500">Ödeme Güvenliği</h3>
-          <p className="text-sm text-zinc-400">
-            Tüm ödemeler PayTR altyapısıyla güvenli şekilde işlenir.
-            Kart bilgileriniz bizim sunucularımızda saklanmaz.
-            Ödeme başarılı olunca paketiniz anında güncellenir.
-          </p>
+        <Card className="p-4 bg-zinc-800 border-zinc-700">
+          <div className="flex items-start gap-3">
+            <Shield className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-bold text-green-400 mb-1">Ödeme Güvenliği (Yakında)</h3>
+              <p className="text-sm text-zinc-400">
+                Tüm ödemeler PayTR altyapısıyla güvenli şekilde işlenecek.
+                Kart bilgileriniz bizim sunucularımızda saklanmayacak.
+                Ödeme başarılı olunca paketiniz anında güncellenecek.
+              </p>
+            </div>
+          </div>
         </Card>
       </div>
     </div>
@@ -223,7 +244,7 @@ export default function PaketPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
-        Yükleniyor...
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500" />
       </div>
     }>
       <PaketIcerik />

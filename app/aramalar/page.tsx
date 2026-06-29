@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Phone, PhoneCall, User, MapPin, Plus, Search, ShoppingCart, Clock } from 'lucide-react'
+import { Phone, PhoneCall, User, MapPin, Plus, Search, ShoppingCart, Clock, LayoutDashboard, Users } from 'lucide-react'
 
 type Musteri = {
   id: number
@@ -148,18 +148,28 @@ export default function AramalarPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Gelen Aramalar</h1>
-          <p className="text-sm text-zinc-400 mt-1">Telefon açıldığında numarayı gir, sistemi otomatik tanır</p>
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <PhoneCall className="w-7 h-7 text-green-500" />
+            Gelen Aramalar
+          </h1>
+          <p className="text-sm text-zinc-400 mt-1">Telefon açıldığında numarayı gir, sistem otomatik tanır</p>
         </div>
-        <Button
-          onClick={() => router.push('/musteriler')}
-          className="bg-zinc-700 hover:bg-zinc-600"
-        >
-          <User className="w-4 h-4 mr-2" />
-          Müşteriler
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <LayoutDashboard className="w-4 h-4 mr-1.5" />
+            Dashboard
+          </Button>
+          <Button onClick={() => router.push('/musteriler')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <Users className="w-4 h-4 mr-1.5" />
+            Müşteriler
+          </Button>
+          <Button onClick={() => router.push('/paket-siparis')} className="bg-green-600 hover:bg-green-700" size="sm">
+            <ShoppingCart className="w-4 h-4 mr-1.5" />
+            Paket Sipariş
+          </Button>
+        </div>
       </div>
 
       {/* Arama Girişi */}

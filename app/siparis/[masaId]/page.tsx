@@ -146,10 +146,15 @@ export default function SiparisPage() {
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-4 pb-32">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">{masa?.ad} - Sipariş</h1>
-        <Button onClick={() => router.push('/masalar')} className="bg-zinc-700">
-          Geri
-        </Button>
+        <h1 className="text-2xl font-black">{masa?.ad} - Sipariş</h1>
+        <div className="flex gap-2">
+          <Button onClick={() => router.push('/siparisler')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            Siparişler
+          </Button>
+          <Button onClick={() => router.push('/masalar')} className="bg-yellow-500 text-black hover:bg-yellow-400" size="sm">
+            Masalar
+          </Button>
+        </div>
       </div>
 
       {kategoriler.length === 0? (

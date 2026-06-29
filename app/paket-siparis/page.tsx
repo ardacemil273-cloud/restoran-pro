@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Search, ShoppingCart, User, MapPin, Phone, Plus, Minus, Trash2, Check } from 'lucide-react'
+import { Search, ShoppingCart, User, MapPin, Phone, Plus, Minus, Trash2, Check, LayoutDashboard, PhoneCall } from 'lucide-react'
 
 function PaketSiparisContent() {
   const params = useSearchParams()
@@ -203,11 +203,24 @@ function PaketSiparisContent() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-4 pb-40">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Paket Sipariş</h1>
-        <Button onClick={() => router.push('/aramalar')} className="bg-zinc-700">
-          Geri
-        </Button>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <h1 className="text-2xl font-black flex items-center gap-2">
+          <ShoppingCart className="w-7 h-7 text-yellow-500" />
+          Paket Sipariş
+        </h1>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <LayoutDashboard className="w-4 h-4 mr-1.5" />
+            Dashboard
+          </Button>
+          <Button onClick={() => router.push('/aramalar')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <PhoneCall className="w-4 h-4 mr-1.5" />
+            Aramalar
+          </Button>
+          <Button onClick={() => router.push('/siparisler')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            Siparişler
+          </Button>
+        </div>
       </div>
 
       {/* Müşteri Bilgileri */}

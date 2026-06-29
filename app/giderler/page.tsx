@@ -12,7 +12,8 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   TrendingUp, TrendingDown, DollarSign, Plus, Trash2,
-  Home, Zap, Users, ShoppingCart, MoreHorizontal, RefreshCw
+  Home, Zap, Users, ShoppingCart, MoreHorizontal, RefreshCw,
+  LayoutDashboard, BarChart3
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
@@ -189,15 +190,23 @@ export default function GiderlerPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <TrendingDown className="text-red-400" />
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <TrendingDown className="w-7 h-7 text-red-400" />
             Gider Takibi
           </h1>
           <p className="text-zinc-400 text-sm mt-1">{restoran?.ad}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <LayoutDashboard className="w-4 h-4 mr-1.5" />
+            Dashboard
+          </Button>
+          <Button onClick={() => router.push('/rapor')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <BarChart3 className="w-4 h-4 mr-1.5" />
+            Raporlar
+          </Button>
           {(['bu_ay', 'gecen_ay', 'bu_yil'] as const).map(d => (
             <Button
               key={d}

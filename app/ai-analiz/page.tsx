@@ -103,31 +103,36 @@ export default function AiAnalizPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Brain className="text-purple-400" />
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <Brain className="w-7 h-7 text-purple-400" />
             AI Satış Analizi
           </h1>
           <p className="text-zinc-400 text-sm mt-1">{restoran?.ad} · Son 30 gün</p>
         </div>
-        <Button
-          onClick={analizBaslat}
-          disabled={yukleniyor}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
-        >
-          {yukleniyor ? (
-            <>
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-              Analiz Ediliyor...
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4 mr-2" />
-              AI Analizi Başlat
-            </>
-          )}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <ChevronRight className="w-4 h-4 mr-1.5 rotate-180" />
+            Dashboard
+          </Button>
+          <Button onClick={() => router.push('/rapor')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <TrendingUp className="w-4 h-4 mr-1.5" />
+            Raporlar
+          </Button>
+          <Button
+            onClick={analizBaslat}
+            disabled={yukleniyor}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold"
+            size="sm"
+          >
+            {yukleniyor ? (
+              <><RefreshCw className="w-4 h-4 mr-1.5 animate-spin" />Analiz Ediliyor...</>
+            ) : (
+              <><Sparkles className="w-4 h-4 mr-1.5" />AI Analizi Başlat</>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Başlangıç Ekranı */}

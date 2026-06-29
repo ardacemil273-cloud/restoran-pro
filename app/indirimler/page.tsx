@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Tag, Plus, Trash2, Copy, RefreshCw, Percent, DollarSign, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Tag, Plus, Trash2, Copy, RefreshCw, Percent, DollarSign, ToggleLeft, ToggleRight, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -119,18 +119,24 @@ export default function IndirimlerPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Tag className="text-pink-400" />
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <Tag className="w-7 h-7 text-pink-400" />
             İndirim & Kuponlar
           </h1>
           <p className="text-zinc-400 text-sm mt-1">{restoran?.ad}</p>
         </div>
-        <Button onClick={() => setEkleModal(true)} className="bg-yellow-500 text-black hover:bg-yellow-400 font-bold">
-          <Plus className="w-4 h-4 mr-2" />
-          Kupon Oluştur
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <LayoutDashboard className="w-4 h-4 mr-1.5" />
+            Dashboard
+          </Button>
+          <Button onClick={() => setEkleModal(true)} className="bg-yellow-500 text-black hover:bg-yellow-400 font-bold" size="sm">
+            <Plus className="w-4 h-4 mr-1.5" />
+            Kupon Oluştur
+          </Button>
+        </div>
       </div>
 
       {indirimler.length === 0 ? (

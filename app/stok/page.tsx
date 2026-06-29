@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { AlertTriangle, Package, TrendingDown, CheckCircle, Edit2, Save, X, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Package, TrendingDown, CheckCircle, Edit2, Save, X, RefreshCw, LayoutDashboard, Warehouse } from 'lucide-react'
 
 type Urun = {
   id: string
@@ -139,18 +139,28 @@ export default function StokPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Package className="text-yellow-500" />
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <Warehouse className="w-7 h-7 text-yellow-500" />
             Stok Yönetimi
           </h1>
           <p className="text-zinc-400 text-sm mt-1">{restoran?.ad}</p>
         </div>
-        <Button onClick={loadData} variant="outline" className="border-zinc-600">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Yenile
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <LayoutDashboard className="w-4 h-4 mr-1.5" />
+            Dashboard
+          </Button>
+          <Button onClick={() => router.push('/urunler')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <Package className="w-4 h-4 mr-1.5" />
+            Ürünler
+          </Button>
+          <Button onClick={loadData} variant="outline" className="border-zinc-600" size="sm">
+            <RefreshCw className="w-4 h-4 mr-1.5" />
+            Yenile
+          </Button>
+        </div>
       </div>
 
       {/* Özet Kartlar */}

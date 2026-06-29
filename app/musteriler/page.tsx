@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { User, Phone, MapPin, Plus, Search, Pencil, Trash2, ShoppingCart, X } from 'lucide-react'
+import { User, Phone, MapPin, Plus, Search, Pencil, Trash2, ShoppingCart, X, LayoutDashboard, PhoneCall } from 'lucide-react'
 
 type Musteri = {
   id: number
@@ -179,18 +179,32 @@ export default function MusterilerPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Müşteriler</h1>
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <User className="w-7 h-7 text-blue-500" />
+            Müşteriler
+          </h1>
           <p className="text-sm text-zinc-400 mt-1">{musteriler.length} kayıtlı müşteri</p>
         </div>
-        <Button
-          onClick={() => setEkleModal(true)}
-          className="bg-yellow-500 text-black hover:bg-yellow-600"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Müşteri Ekle
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <LayoutDashboard className="w-4 h-4 mr-1.5" />
+            Dashboard
+          </Button>
+          <Button onClick={() => router.push('/aramalar')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <PhoneCall className="w-4 h-4 mr-1.5" />
+            Aramalar
+          </Button>
+          <Button
+            onClick={() => setEkleModal(true)}
+            className="bg-yellow-500 text-black hover:bg-yellow-400 font-bold"
+            size="sm"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            Müşteri Ekle
+          </Button>
+        </div>
       </div>
 
       {/* Arama */}

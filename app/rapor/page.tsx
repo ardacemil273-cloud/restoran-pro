@@ -2,10 +2,11 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { TrendingUp, Package, Clock } from 'lucide-react'
+import { TrendingUp, Package, Clock, LayoutDashboard, DollarSign, BarChart3 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Badge } from '@/components/ui/badge'
 
@@ -152,7 +153,29 @@ export default function RaporPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <h1 className="text-3xl font-bold mb-6">{restoran?.ad} - Raporlar</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <BarChart3 className="w-7 h-7 text-green-500" />
+            Raporlar
+          </h1>
+          <p className="text-zinc-400 text-sm mt-1">{restoran?.ad}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <LayoutDashboard className="w-4 h-4 mr-1.5" />
+            Dashboard
+          </Button>
+          <Button onClick={() => router.push('/kasa')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <DollarSign className="w-4 h-4 mr-1.5" />
+            Kasa
+          </Button>
+          <Button onClick={() => router.push('/giderler')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <TrendingUp className="w-4 h-4 mr-1.5" />
+            Giderler
+          </Button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="p-6 bg-gradient-to-br from-green-900/50 to-zinc-800 border-green-700">

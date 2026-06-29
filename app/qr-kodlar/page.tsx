@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Download, QrCode, Printer, Palette, RefreshCw, Globe } from 'lucide-react'
+import { Download, QrCode, Printer, Palette, RefreshCw, Globe, LayoutDashboard, ChefHat } from 'lucide-react'
 import QRCode from 'qrcode'
 import { QRCodeSVG } from 'qrcode.react'
 
@@ -208,32 +208,44 @@ export default function QrKodlarPage() {
     <div className="min-h-screen bg-zinc-900 text-white p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <QrCode className="text-yellow-500" />
+          <h1 className="text-2xl font-black flex items-center gap-2">
+            <QrCode className="w-7 h-7 text-yellow-500" />
             QR Kod Oluşturucu
           </h1>
           <p className="text-zinc-400 text-sm mt-1">{restoran?.ad} · {masalar.length} masa</p>
         </div>
 
-        {masalar.length > 0 && (
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              onClick={tumunuYazdir}
-              variant="outline"
-              className="border-zinc-600 text-zinc-300"
-            >
-              <Printer className="w-4 h-4 mr-2" />
-              Tümünü Yazdır
-            </Button>
-            <Button
-              onClick={tumunuIndir}
-              className="bg-yellow-500 text-black hover:bg-yellow-400"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Tümünü İndir
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2 flex-wrap">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <LayoutDashboard className="w-4 h-4 mr-1.5" />
+            Dashboard
+          </Button>
+          <Button onClick={() => router.push('/masalar')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            <ChefHat className="w-4 h-4 mr-1.5" />
+            Masalar
+          </Button>
+          {masalar.length > 0 && (
+            <>
+              <Button
+                onClick={tumunuYazdir}
+                variant="outline"
+                className="border-zinc-600 text-zinc-300"
+                size="sm"
+              >
+                <Printer className="w-4 h-4 mr-1.5" />
+                Tümünü Yazdır
+              </Button>
+              <Button
+                onClick={tumunuIndir}
+                className="bg-yellow-500 text-black hover:bg-yellow-400"
+                size="sm"
+              >
+                <Download className="w-4 h-4 mr-1.5" />
+                Tümünü İndir
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Renk Özelleştirme */}

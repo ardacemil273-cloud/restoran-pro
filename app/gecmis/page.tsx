@@ -78,14 +78,22 @@ export default function GecmisPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Sipariş Geçmişi</h1>
+          <h1 className="text-2xl font-black">Sipariş Geçmişi</h1>
           <p className="text-sm text-zinc-400 mt-1">{restoran?.ad}</p>
         </div>
-        <Button onClick={() => router.push('/siparisler')} className="bg-zinc-700 hover:bg-zinc-600">
-          Aktif Siparişler
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            Dashboard
+          </Button>
+          <Button onClick={() => router.push('/siparisler')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            Aktif Siparişler
+          </Button>
+          <Button onClick={() => router.push('/rapor')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
+            Raporlar
+          </Button>
+        </div>
       </div>
 
       {/* Filtre */}

@@ -4,8 +4,9 @@ import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import {
-  Hop as Home, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users,
-  TrendingDown, Brain, Warehouse, CalendarDays, Tag, UtensilsCrossed, ChefHat, Menu, X
+  LayoutDashboard, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users,
+  TrendingDown, Brain, Warehouse, CalendarDays, Tag, UtensilsCrossed, ChefHat, Menu, X,
+  DollarSign, ChevronDown, ChevronRight, Layers
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PwaInstall from '@/components/PwaInstall'
@@ -18,6 +19,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [mobilMenuAcik, setMobilMenuAcik] = useState(false)
+  const [menuGrupAcik, setMenuGrupAcik] = useState<Record<string, boolean>>({
+    isletme: true,
+    yonetim: true,
+    analiz: true,
+    sistem: true
+  })
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
@@ -60,55 +67,117 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     )
   }
 
-  const menuItems = [
-    { ad: 'Masalar', path: '/masalar', icon: Home },
-    { ad: 'Siparişler', path: '/siparisler', icon: ShoppingCart },
-    { ad: 'Gelen Aramalar', path: '/aramalar', icon: Phone },
-    { ad: 'Müşteriler', path: '/musteriler', icon: Users },
-    { ad: 'Kasa', path: '/kasa', icon: Package },
-    { ad: 'Stok Takibi', path: '/stok', icon: Warehouse },
-    { ad: 'Gider Takibi', path: '/giderler', icon: TrendingDown },
-    { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain },
-    { ad: 'Rezervasyon', path: '/rezervasyon', icon: CalendarDays },
-    { ad: 'İndirimler', path: '/indirimler', icon: Tag },
-    { ad: 'Garsonlar', path: '/garsonlar', icon: UtensilsCrossed },
-    { ad: 'Rapor', path: '/rapor', icon: BarChart3 },
-    { ad: 'QR Kodlar', path: '/qr-kodlar', icon: QrCode },
-    { ad: 'Ayarlar', path: '/ayarlar', icon: Settings },
+  const menuGruplari = [
+    {
+      id: 'isletme',
+      baslik: 'İşletme',
+      items: [
+        { ad: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+        { ad: 'Masalar', path: '/masalar', icon: ChefHat },
+        { ad: 'Siparişler', path: '/siparisler', icon: ShoppingCart },
+        { ad: 'Kasa', path: '/kasa', icon: DollarSign },
+        { ad: 'Gelen Aramalar', path: '/aramalar', icon: Phone },
+      ]
+    },
+    {
+      id: 'yonetim',
+      baslik: 'Yönetim',
+      items: [
+        { ad: 'Ürünler', path: '/urunler', icon: Package },
+        { ad: 'Kategoriler', path: '/kategoriler', icon: Layers },
+        { ad: 'Stok Takibi', path: '/stok', icon: Warehouse },
+        { ad: 'Gider Takibi', path: '/giderler', icon: TrendingDown },
+        { ad: 'İndirimler', path: '/indirimler', icon: Tag },
+        { ad: 'QR Kodlar', path: '/qr-kodlar', icon: QrCode },
+      ]
+    },
+    {
+      id: 'musteri',
+      baslik: 'Müşteri',
+      items: [
+        { ad: 'Müşteriler', path: '/musteriler', icon: Users },
+        { ad: 'Rezervasyon', path: '/rezervasyon', icon: CalendarDays },
+        { ad: 'Garsonlar', path: '/garsonlar', icon: UtensilsCrossed },
+      ]
+    },
+    {
+      id: 'analiz',
+      baslik: 'Analiz',
+      items: [
+        { ad: 'Raporlar', path: '/rapor', icon: BarChart3 },
+        { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain },
+      ]
+    },
+    {
+      id: 'sistem',
+      baslik: 'Sistem',
+      items: [
+        { ad: 'Ayarlar', path: '/ayarlar', icon: Settings },
+      ]
+    }
   ]
+
+  const toggleGrup = (id: string) => {
+    setMenuGrupAcik(prev => ({ ...prev, [id]: !prev[id] }))
+  }
 
   const SidebarContent = () => (
     <>
-      <div className="flex items-center gap-2 mb-8">
-        <ChefHat className="w-7 h-7 text-yellow-500" />
-        <h1 className="text-xl font-bold text-yellow-500">Restoran Pro</h1>
+      <div className="flex items-center gap-2 mb-6 px-2">
+        <div className="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center">
+          <ChefHat className="w-5 h-5 text-black" />
+        </div>
+        <h1 className="text-lg font-black text-yellow-500">Restoran Pro</h1>
       </div>
-      <nav className="space-y-1">
-        {menuItems.map(item => {
-          const Icon = item.icon
-          const aktif = pathname === item.path
-          return (
-            <Button
-              key={item.path}
-              onClick={() => { router.push(item.path); setMobilMenuAcik(false) }}
-              variant={aktif ? 'default' : 'ghost'}
-              className={`w-full justify-start text-sm ${
-                aktif ? 'bg-yellow-500 text-black font-bold' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-              }`}
+
+      <nav className="space-y-1 flex-1 overflow-y-auto">
+        {menuGruplari.map(grup => (
+          <div key={grup.id} className="mb-2">
+            <button
+              onClick={() => toggleGrup(grup.id)}
+              className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-bold text-zinc-500 uppercase tracking-wider hover:text-zinc-400 transition"
             >
-              <Icon className="w-4 h-4 mr-3 shrink-0" />
-              {item.ad}
-            </Button>
-          )
-        })}
+              <span>{grup.baslik}</span>
+              {menuGrupAcik[grup.id]
+                ? <ChevronDown className="w-3 h-3" />
+                : <ChevronRight className="w-3 h-3" />
+              }
+            </button>
+
+            {menuGrupAcik[grup.id] && (
+              <div className="space-y-0.5">
+                {grup.items.map(item => {
+                  const Icon = item.icon
+                  const aktif = pathname === item.path
+                  return (
+                    <Button
+                      key={item.path}
+                      onClick={() => { router.push(item.path); setMobilMenuAcik(false) }}
+                      variant={aktif ? 'default' : 'ghost'}
+                      className={`w-full justify-start text-sm h-9 ${
+                        aktif
+                          ? 'bg-yellow-500 text-black font-bold hover:bg-yellow-400'
+                          : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 mr-2.5 shrink-0" />
+                      {item.ad}
+                    </Button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        ))}
       </nav>
+
       <div className="mt-auto pt-4 border-t border-zinc-800">
         <Button
           onClick={cikisYap}
           variant="ghost"
-          className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20"
+          className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20 text-sm"
         >
-          <LogOut className="w-4 h-4 mr-3" />
+          <LogOut className="w-4 h-4 mr-2.5" />
           Çıkış Yap
         </Button>
       </div>
@@ -145,8 +214,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Mobil Header */}
         <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-zinc-950 border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ChefHat className="w-6 h-6 text-yellow-500" />
-            <span className="font-bold text-yellow-500">Restoran Pro</span>
+            <div className="w-7 h-7 bg-yellow-500 rounded-lg flex items-center justify-center">
+              <ChefHat className="w-4 h-4 text-black" />
+            </div>
+            <span className="font-black text-yellow-500">Restoran Pro</span>
           </div>
           <button
             onClick={() => setMobilMenuAcik(!mobilMenuAcik)}
@@ -171,12 +242,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <div className="flex min-h-screen">
           {/* Desktop Sidebar */}
-          <aside className="w-64 bg-zinc-950 border-r border-zinc-800 p-4 hidden lg:flex flex-col">
+          <aside className="w-60 bg-zinc-950 border-r border-zinc-800 p-4 hidden lg:flex flex-col fixed top-0 left-0 h-full overflow-y-auto">
             <SidebarContent />
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1 pt-14 lg:pt-0 overflow-auto">
+          <main className="flex-1 pt-14 lg:pt-0 lg:ml-60 overflow-auto min-h-screen">
             {user && <StokUyari />}
             {children}
           </main>
