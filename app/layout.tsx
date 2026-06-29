@@ -95,7 +95,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <head>
           <link rel="manifest" href="/manifest.json" />
           <meta name="theme-color" content="#f59e0b" />
-          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+          <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+          <meta name="apple-mobile-web-app-title" content="Restoran Pro" />
+          <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         </head>
         <body className="bg-background text-foreground selection:bg-primary/30 antialiased">
           <PwaInstall />
@@ -111,7 +115,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#f59e0b" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Restoran Pro" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className="bg-background text-foreground selection:bg-primary/30 antialiased overflow-hidden">
         <PwaInstall />
@@ -202,7 +210,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
             <button 
               onClick={() => setMobilMenuAcik(!mobilMenuAcik)}
-              className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white"
+              className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all"
             >
               {mobilMenuAcik ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -214,49 +222,63 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
         </div>
 
-        {/* Mobile Menu Overlay */}
+        {/* Mobile Menu Overlay - PC Sidebar ile birebir aynı */}
         {mobilMenuAcik && (
-          <div className="lg:hidden fixed inset-0 z-[60] bg-background animate-fadeIn overflow-y-auto pb-10">
-            <div className="p-6 flex flex-col h-full">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                    <UtensilsCrossed className="w-6 h-6 text-black" />
-                  </div>
-                  <h1 className="text-xl font-black tracking-tighter text-white">RESTORAN <span className="text-primary">PRO</span></h1>
+          <div className="lg:hidden fixed inset-0 z-[60] bg-background animate-fadeIn overflow-y-auto pt-20">
+            <div className="p-6 flex flex-col min-h-full">
+              <nav className="space-y-6 flex-1">
+                <div className="space-y-1">
+                  <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+                  <NavItem href="/tek-panel" icon={Layers} label="Tek Panel" badge="Yemek+Getir" color="text-orange-400" />
                 </div>
-                <button onClick={() => setMobilMenuAcik(false)} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white">
-                  <X size={20} />
+
+                <NavGroup label="Garson Paneli" id="garson">
+                  <NavItem href="/masalar" icon={MapPin} label="Masa Haritası" />
+                  <NavItem href="/siparisler" icon={ShoppingCart} label="Siparişler" />
+                  <NavItem href="/mutfak-ekrani" icon={ChefHat} label="Mutfak Ekranı" />
+                  <NavItem href="/ai-sesli-siparis" icon={Mic} label="Sesli Sipariş" badge="AI" color="text-cyan-400" />
+                  <NavItem href="/kasa" icon={Wallet} label="Kasa / Ödeme" />
+                </NavGroup>
+
+                <NavGroup label="Operasyon" id="isletme">
+                  <NavItem href="/paket-siparis" icon={Package} label="Paket Servis" />
+                  <NavItem href="/kurye-takip" icon={Truck} label="Kurye Takibi" color="text-blue-400" />
+                  <NavItem href="/rezervasyon" icon={CalendarDays} label="Rezervasyonlar" />
+                  <NavItem href="/urunler" icon={ListChecks} label="Ürün Yönetimi" />
+                  <NavItem href="/stok" icon={Warehouse} label="Stok Takibi" badge="AI" />
+                </NavGroup>
+
+                <NavGroup label="Müşteri & Sadakat" id="sadakat">
+                  <NavItem href="/musteriler" icon={Users} label="Müşteri Rehberi" />
+                  <NavItem href="/sadakat-oyun" icon={Gamepad2} label="Çarkıfelek" badge="Yeni" color="text-purple-400" />
+                  <NavItem href="/indirimler" icon={Tag} label="Kampanyalar" />
+                  <NavItem href="/whatsapp-siparisler" icon={MessageCircle} label="WP Siparişleri" color="text-green-400" />
+                </NavGroup>
+
+                <NavGroup label="Yönetim & Analiz" id="analiz">
+                  <NavItem href="/rapor" icon={BarChart3} label="Satış Raporları" />
+                  <NavItem href="/patron-merkezi" icon={Crown} label="Patron Merkezi" color="text-yellow-400" />
+                  <NavItem href="/garson-performans" icon={Star} label="Garson Primleri" />
+                  <NavItem href="/ai-analiz" icon={Brain} label="AI Tahminleme" badge="AI" />
+                </NavGroup>
+
+                <NavGroup label="Sistem" id="ayarlar">
+                  <NavItem href="/qr-kodlar" icon={QrCode} label="QR Menü Yönetimi" />
+                  <NavItem href="/subeler" icon={Building2} label="Şube Yönetimi" />
+                  <NavItem href="/ayarlar" icon={Settings} label="Genel Ayarlar" />
+                </NavGroup>
+              </nav>
+
+              {/* Mobile Menu Footer */}
+              <div className="pt-6 border-t border-white/5 mt-6">
+                <button 
+                  onClick={cikisYap}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/40 hover:bg-red-500/10 hover:text-red-500 transition-all"
+                >
+                  <LogOut size={18} />
+                  <span className="text-sm font-bold">Oturumu Kapat</span>
                 </button>
               </div>
-              
-              <nav className="space-y-6">
-                <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
-                <NavItem href="/tek-panel" icon={Layers} label="Tek Panel" badge="Yemek+Getir" />
-                
-                <NavGroup label="Garson Paneli" id="garson">
-                  <NavItem href="/masalar" icon={MapPin} label="Masalar" />
-                  <NavItem href="/siparisler" icon={ShoppingCart} label="Siparişler" />
-                  <NavItem href="/ai-sesli-siparis" icon={Mic} label="Sesli Sipariş" />
-                </NavGroup>
-
-                <NavGroup label="İşletme" id="isletme">
-                  <NavItem href="/paket-siparis" icon={Package} label="Paket Servis" />
-                  <NavItem href="/urunler" icon={ListChecks} label="Ürünler" />
-                  <NavItem href="/stok" icon={Warehouse} label="Stok" />
-                </NavGroup>
-
-                <NavGroup label="Yönetim" id="analiz">
-                  <NavItem href="/rapor" icon={BarChart3} label="Raporlar" />
-                  <NavItem href="/patron-merkezi" icon={Crown} label="Patron Merkezi" />
-                </NavGroup>
-
-                <div className="pt-6 border-t border-white/5">
-                  <button onClick={cikisYap} className="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 font-bold">
-                    <LogOut size={18} /> Oturumu Kapat
-                  </button>
-                </div>
-              </nav>
             </div>
           </div>
         )}
