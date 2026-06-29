@@ -287,3 +287,86 @@
     }
   }
 }
+
+
+/* 🎯 Premium UX Enhancements */
+
+/* Keyboard Shortcut Indicator */
+kbd {
+  @apply px-2 py-1 bg-zinc-700 text-zinc-200 rounded text-xs font-bold border border-zinc-600;
+}
+
+/* Focus Management */
+:focus-visible {
+  @apply outline-none ring-2 ring-yellow-500 ring-offset-2 ring-offset-zinc-900;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: more) {
+  :root {
+    --color-primary: #fbbf24;
+  }
+}
+
+/* Smooth Transitions */
+* {
+  @apply transition-colors duration-200;
+}
+
+button, a, [role="button"] {
+  @apply transition-all duration-200;
+}
+
+/* Page Transitions */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.3s ease-out;
+}
+
+/* Hover Lift Effect */
+.hover-lift {
+  @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-lg;
+}
+
+/* Glow Effect */
+.glow {
+  @apply shadow-lg shadow-yellow-500/20;
+}
+
+.glow-hover {
+  @apply transition-all duration-200 hover:shadow-lg hover:shadow-yellow-500/30;
+}
+
+/* Loading Pulse */
+.pulse-loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth Scale */
+.scale-on-hover {
+  @apply transition-transform duration-200 hover:scale-105;
+}
+
+/* Text Gradient */
+.text-gradient {
+  @apply bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent;
+}

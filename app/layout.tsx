@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import PwaInstall from '@/components/PwaInstall'
 import StokUyari from '@/components/StokUyari'
 import { OnboardingTour } from '@/components/OnboardingTour'
+import { PremiumUX } from '@/components/PremiumUX'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -253,6 +254,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1 pt-14 lg:pt-0 lg:ml-60 overflow-auto min-h-screen">
             {user && <StokUyari />}
             {user && <OnboardingTour />}
+            {user && <PremiumUX />}
             {children}
           </main>
         </div>
