@@ -86,19 +86,35 @@ export default function PwaInstall() {
     setIsInstalling(true)
     
     try {
-      await deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
+      // Timeout ekle - 10 saniye sonra hata ver
+      const installPromise = new Promise<void>(async (resolve, reject) => {
+        try {
+          await deferredPrompt.prompt()
+          const { outcome } = await deferredPrompt.userChoice
 
-      if (outcome === 'accepted') {
-        toast.success('✅ Uygulama yükleniyor...')
-        setDeferredPrompt(null)
-        setShowPrompt(false)
-        localStorage.setItem('pwa_installed', 'true')
-      } else {
-        setIsInstalling(false)
-      }
+          if (outcome === 'accepted') {
+            resolve()
+          } else {
+            reject(new Error('User dismissed the install prompt'))
+          }
+        } catch (err) {
+          reject(err)
+        }
+      })
+
+      const timeoutPromise = new Promise<void>((_, reject) => {
+        setTimeout(() => reject(new Error('Install prompt timeout')), 10000)
+      })
+
+      await Promise.race([installPromise, timeoutPromise])
+      
+      toast.success('✅ Uygulama yükleniyor...')
+      setDeferredPrompt(null)
+      setShowPrompt(false)
+      localStorage.setItem('pwa_installed', 'true')
     } catch (err) {
       console.error('Install error:', err)
+      toast.error('Yükleme başarısız oldu. Lütfen tekrar deneyin.')
       setIsInstalling(false)
     }
   }

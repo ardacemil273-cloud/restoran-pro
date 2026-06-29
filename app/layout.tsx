@@ -68,9 +68,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      if (!user) router.push('/login')
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        setUser(user)
+        if (!user) {
+          // Middleware tarafından zaten login'e yönlendirilecek
+          // Ama client-side hydration için de kontrol et
+          router.push('/login')
+        }
+      } catch (error) {
+        console.error('Auth check error:', error)
+        router.push('/login')
+      }
     }
     checkAuth()
   }, [router])

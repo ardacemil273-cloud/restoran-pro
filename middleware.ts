@@ -67,6 +67,11 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/masalar', req.url))
   }
 
+  // F5 sorunu çözümü: Session validation header ekle
+  if (session) {
+    res.headers.set('X-Session-Valid', 'true')
+  }
+
   return res
 }
 

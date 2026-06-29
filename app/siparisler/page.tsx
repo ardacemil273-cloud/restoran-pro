@@ -29,8 +29,27 @@ export default function SiparislerPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('tum')
   const [selectedOrder, setSelectedOrder] = useState<Siparis | null>(null)
+  const [sessionValid, setSessionValid] = useState(true)
 
   useEffect(() => {
+    // F5 sorunu çözümü: Session doğrulama
+    const validateSession = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          setSessionValid(false)
+          // Sayfayı yenile ve login'e yönlendir
+          window.location.href = '/login'
+          return
+        }
+        setSessionValid(true)
+      } catch (error) {
+        console.error('Session validation error:', error)
+        setSessionValid(false)
+      }
+    }
+
+    validateSession()
     fetchSiparisler()
     const interval = setInterval(fetchSiparisler, 5000)
     return () => clearInterval(interval)
