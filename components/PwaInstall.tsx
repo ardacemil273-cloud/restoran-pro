@@ -15,6 +15,7 @@ export default function PwaInstall() {
   const [isIOS, setIsIOS] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
   const [isInstalling, setIsInstalling] = useState(false)
+  const [showManualFallback, setShowManualFallback] = useState(false)
 
   useEffect(() => {
     // iOS kontrolü
@@ -28,16 +29,24 @@ export default function PwaInstall() {
     
     if (isStandalone) {
       setIsInstalled(true)
+      localStorage.setItem('pwa_installed', 'true')
       return
     }
 
+    // localStorage'dan kontrol et
+    const wasShown = localStorage.getItem('pwa_shown')
+    
     // beforeinstallprompt event'ini yakala
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       const event = e as BeforeInstallPromptEvent
       setDeferredPrompt(event)
+      
       // Hemen göster
-      setShowPrompt(true)
+      if (!wasShown) {
+        setShowPrompt(true)
+        localStorage.setItem('pwa_shown', 'true')
+      }
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
@@ -46,18 +55,30 @@ export default function PwaInstall() {
     const handleAppInstalled = () => {
       setIsInstalled(true)
       setShowPrompt(false)
+      setShowManualFallback(false)
       setIsInstalling(false)
       setDeferredPrompt(null)
+      localStorage.setItem('pwa_installed', 'true')
+      localStorage.removeItem('pwa_shown')
       toast.success('✅ Uygulama başarıyla yüklendi!')
     }
 
     window.addEventListener('appinstalled', handleAppInstalled)
 
+    // Fallback: eğer 3 saniye sonra prompt gelmezse manual göster
+    const fallbackTimer = setTimeout(() => {
+      if (!deferredPrompt && !isStandalone && !wasShown) {
+        setShowManualFallback(true)
+        localStorage.setItem('pwa_shown', 'true')
+      }
+    }, 3000)
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
+      clearTimeout(fallbackTimer)
     }
-  }, [])
+  }, [deferredPrompt])
 
   const handleInstall = async () => {
     if (!deferredPrompt) return
@@ -72,6 +93,7 @@ export default function PwaInstall() {
         toast.success('✅ Uygulama yükleniyor...')
         setDeferredPrompt(null)
         setShowPrompt(false)
+        localStorage.setItem('pwa_installed', 'true')
       } else {
         setIsInstalling(false)
       }
@@ -81,10 +103,10 @@ export default function PwaInstall() {
     }
   }
 
-  if (isInstalled || !deferredPrompt) return null
+  if (isInstalled) return null
 
   // iOS için özel talimat
-  if (isIOS) {
+  if (isIOS && (showPrompt || showManualFallback)) {
     return (
       <AnimatePresence>
         <motion.div
@@ -105,7 +127,10 @@ export default function PwaInstall() {
                 </div>
               </div>
               <button
-                onClick={() => setShowPrompt(false)}
+                onClick={() => {
+                  setShowPrompt(false)
+                  setShowManualFallback(false)
+                }}
                 className="p-1 text-white/30 hover:text-white transition-all"
               >
                 <X size={16} />
@@ -116,7 +141,10 @@ export default function PwaInstall() {
               <p>2️⃣ "Ana Ekrana Ekle" seçeneğini seç</p>
             </div>
             <button
-              onClick={() => setShowPrompt(false)}
+              onClick={() => {
+                setShowPrompt(false)
+                setShowManualFallback(false)
+              }}
               className="w-full px-4 py-2.5 bg-primary hover:bg-primary/90 text-black font-black rounded-xl transition-all text-sm"
             >
               Anladım
@@ -128,7 +156,7 @@ export default function PwaInstall() {
   }
 
   // Android ve diğer tarayıcılar
-  if (showPrompt && deferredPrompt) {
+  if (!isIOS && (showPrompt || showManualFallback) && !isInstalled) {
     return (
       <AnimatePresence>
         <motion.div
@@ -159,7 +187,7 @@ export default function PwaInstall() {
                 <div className="flex items-center gap-3 pt-3">
                   <button
                     onClick={handleInstall}
-                    disabled={isInstalling}
+                    disabled={isInstalling || !deferredPrompt}
                     className="flex-1 bg-primary hover:bg-primary/90 disabled:opacity-50 text-black text-xs font-black py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95"
                   >
                     {isInstalling ? (
@@ -177,7 +205,10 @@ export default function PwaInstall() {
                     )}
                   </button>
                   <button
-                    onClick={() => setShowPrompt(false)}
+                    onClick={() => {
+                      setShowPrompt(false)
+                      setShowManualFallback(false)
+                    }}
                     disabled={isInstalling}
                     className="px-3 py-2.5 text-white/30 hover:text-white transition-all text-xs font-bold disabled:opacity-50"
                   >
@@ -187,7 +218,10 @@ export default function PwaInstall() {
               </div>
               
               <button
-                onClick={() => setShowPrompt(false)}
+                onClick={() => {
+                  setShowPrompt(false)
+                  setShowManualFallback(false)
+                }}
                 disabled={isInstalling}
                 className="absolute top-2 right-2 p-1 text-white/20 hover:text-white transition-all disabled:opacity-50"
               >
