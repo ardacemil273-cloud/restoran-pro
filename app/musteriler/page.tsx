@@ -236,7 +236,11 @@ export default function MusterilerPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtreliMusteriler.map(m => (
-            <Card key={m.id} className="p-4 bg-zinc-800 border-zinc-700">
+            <Card
+              key={m.id}
+              className="p-4 bg-zinc-800 border-zinc-700 cursor-pointer hover:border-yellow-500/50 transition-all"
+              onClick={() => router.push(`/musteriler/${m.id}`)}
+            >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center">
