@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
-import { Hop as Home, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users } from 'lucide-react'
+import { Hop as Home, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users, TrendingDown, Brain, Warehouse } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import './globals.css'
 
@@ -37,8 +37,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     { ad: 'Gelen Aramalar', path: '/aramalar', icon: Phone },
     { ad: 'Müşteriler', path: '/musteriler', icon: Users },
     { ad: 'Kasa', path: '/kasa', icon: Package },
+    { ad: 'Stok Takibi', path: '/stok', icon: Warehouse },
+    { ad: 'Gider Takibi', path: '/giderler', icon: TrendingDown },
+    { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain },
     { ad: 'Rapor', path: '/rapor', icon: BarChart3 },
-    { ad: 'QR Kodlar', path: '/qr', icon: QrCode },
+    { ad: 'QR Kodlar', path: '/qr-kodlar', icon: QrCode },
     { ad: 'Ayarlar', path: '/ayarlar', icon: Settings },
   ]
 

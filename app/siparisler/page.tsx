@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Bell, Check, Clock, Truck, Volume2, VolumeX, Printer, Trash2 } from 'lucide-react'
+import { Bell, Check, Clock, Truck, Volume2, VolumeX, Printer, Trash2, ChefHat, Receipt } from 'lucide-react'
+import { fisYazdir } from '@/components/FisYazdir'
 
 type Siparis = {
   id: string
@@ -144,46 +145,22 @@ export default function SiparislerPage() {
     else toast.success('Sipariş iptal edildi')
   }
 
-  function yazdir(siparis: Siparis) {
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) return
+  function kasaFisiYazdir(siparis: Siparis) {
+    fisYazdir({
+      siparis,
+      restoranAd: restoran?.ad || 'Restoran',
+      restoranTelefon: restoran?.telefon,
+      restoranAdres: restoran?.adres,
+      tip: 'kasa'
+    })
+  }
 
-    const urunlerHTML = siparis.siparis_urunleri.map(item => `
-      <tr>
-        <td>${item.adet}x ${item.urunler.ad}</td>
-        <td style="text-align:right">${item.adet * item.birim_fiyat}₺</td>
-      </tr>
-    `).join('')
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Adisyon - ${siparis.masa_ad}</title>
-          <style>
-            body { font-family: monospace; padding: 20px; width: 300px; }
-            h1 { text-align: center; font-size: 20px; margin-bottom: 10px; }
-            .info { text-align: center; margin-bottom: 20px; font-size: 14px; }
-            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-            td { padding: 5px 0; border-bottom: 1px dashed #ccc; }
-            .total { font-size: 18px; font-weight: bold; margin-top: 10px; }
-            .not { margin-top: 10px; padding: 10px; border: 1px solid #000; }
-          </style>
-        </head>
-        <body>
-          <h1>${restoran?.ad}</h1>
-          <div class="info">
-            <div>${siparis.masa_ad}</div>
-            <div>${new Date(siparis.created_at).toLocaleString('tr-TR')}</div>
-          </div>
-          <table>${urunlerHTML}</table>
-          <div class="total">TOPLAM: ${siparis.toplam_tutar}₺</div>
-          ${siparis.not ? `<div class="not"><b>Not:</b> ${siparis.not}</div>` : ''}
-          <div style="text-align:center; margin-top:20px;">Afiyet olsun!</div>
-        </body>
-      </html>
-    `)
-    printWindow.document.close()
-    printWindow.print()
+  function mutfakFisiYazdir(siparis: Siparis) {
+    fisYazdir({
+      siparis,
+      restoranAd: restoran?.ad || 'Restoran',
+      tip: 'mutfak'
+    })
   }
 
   if (yukleniyor) {
@@ -230,22 +207,22 @@ export default function SiparislerPage() {
         </TabsList>
 
         <TabsContent value="hazirlaniyor" className="mt-6">
-          <SiparisGrid siparisler={hazirlaniyor} onDurumGuncelle={durumGuncelle} onSil={siparisSil} onYazdir={yazdir} />
+          <SiparisGrid siparisler={hazirlaniyor} onDurumGuncelle={durumGuncelle} onSil={siparisSil} onKasaFisi={kasaFisiYazdir} onMutfakFisi={mutfakFisiYazdir} />
         </TabsContent>
 
         <TabsContent value="hazir" className="mt-6">
-          <SiparisGrid siparisler={hazir} onDurumGuncelle={durumGuncelle} onSil={siparisSil} onYazdir={yazdir} />
+          <SiparisGrid siparisler={hazir} onDurumGuncelle={durumGuncelle} onSil={siparisSil} onKasaFisi={kasaFisiYazdir} onMutfakFisi={mutfakFisiYazdir} />
         </TabsContent>
 
         <TabsContent value="tamamlandi" className="mt-6">
-          <SiparisGrid siparisler={tamamlandi} onDurumGuncelle={durumGuncelle} onSil={siparisSil} onYazdir={yazdir} />
+          <SiparisGrid siparisler={tamamlandi} onDurumGuncelle={durumGuncelle} onSil={siparisSil} onKasaFisi={kasaFisiYazdir} onMutfakFisi={mutfakFisiYazdir} />
         </TabsContent>
       </Tabs>
     </div>
   )
 }
 
-function SiparisGrid({ siparisler, onDurumGuncelle, onSil, onYazdir }: any) {
+function SiparisGrid({ siparisler, onDurumGuncelle, onSil, onKasaFisi, onMutfakFisi }: any) {
   if (siparisler.length === 0) {
     return (
       <Card className="p-12 bg-zinc-800 border-zinc-700 text-center text-zinc-400">
@@ -262,15 +239,15 @@ function SiparisGrid({ siparisler, onDurumGuncelle, onSil, onYazdir }: any) {
           siparis={siparis} 
           onDurumGuncelle={onDurumGuncelle}
           onSil={onSil}
-          onYazdir={onYazdir}
+          onKasaFisi={onKasaFisi}
+          onMutfakFisi={onMutfakFisi}
         />
       ))}
     </div>
   )
 }
 
-function SiparisCard({ siparis, onDurumGuncelle, onSil, onYazdir }: any) {
-  // Sipariş süresi hesapla
+function SiparisCard({ siparis, onDurumGuncelle, onSil, onKasaFisi, onMutfakFisi }: any) {
   const gecenDakika = Math.floor((Date.now() - new Date(siparis.created_at).getTime()) / 60000)
   
   const zaman = new Date(siparis.created_at).toLocaleTimeString('tr-TR', {
@@ -316,7 +293,8 @@ function SiparisCard({ siparis, onDurumGuncelle, onSil, onYazdir }: any) {
         </p>
       )}
 
-      <div className="flex gap-2">
+      {/* Durum Butonları */}
+      <div className="flex gap-2 mb-2">
         {siparis.durum === 'hazirlaniyor' && (
           <Button 
             onClick={() => onDurumGuncelle(siparis.id, 'hazir')}
@@ -336,19 +314,33 @@ function SiparisCard({ siparis, onDurumGuncelle, onSil, onYazdir }: any) {
           </Button>
         )}
         <Button 
-          onClick={() => onYazdir(siparis)}
-          variant="outline" 
-          size="icon"
-          className="border-zinc-600"
-        >
-          <Printer className="w-4 h-4" />
-        </Button>
-        <Button 
           onClick={() => onSil(siparis.id)}
           variant="destructive" 
           size="icon"
         >
           <Trash2 className="w-4 h-4" />
+        </Button>
+      </div>
+
+      {/* Yazdırma Butonları */}
+      <div className="flex gap-2">
+        <Button 
+          onClick={() => onKasaFisi(siparis)}
+          variant="outline" 
+          size="sm"
+          className="flex-1 border-yellow-600 text-yellow-500 hover:bg-yellow-950"
+        >
+          <Receipt className="w-4 h-4 mr-1" />
+          Kasa Fişi
+        </Button>
+        <Button 
+          onClick={() => onMutfakFisi(siparis)}
+          variant="outline" 
+          size="sm"
+          className="flex-1 border-blue-600 text-blue-400 hover:bg-blue-950"
+        >
+          <ChefHat className="w-4 h-4 mr-1" />
+          Mutfak Fişi
         </Button>
       </div>
     </Card>

@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { PAKETLER, paketKontrol } from '@/lib/paketler'
-import { QrCode, Receipt, Download, Plus, Trash2, GripVertical, Phone } from 'lucide-react'
+import { QrCode, Receipt, Download, Plus, Trash2, GripVertical, Phone, Package } from 'lucide-react'
+import StokUyari from '@/components/StokUyari'
 import QRCode from 'qrcode'
 import {
   DndContext,
@@ -341,6 +342,7 @@ export default function MasalarPage() {
 
   return (
     <div className="p-6 bg-zinc-900 min-h-screen">
+      {restoran && <StokUyari restoranId={restoran.id} />}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold text-white">Masalar - {restoran?.ad}</h1>
@@ -418,6 +420,14 @@ export default function MasalarPage() {
               Rapor
             </Button>
           )}
+
+          <Button
+            onClick={() => router.push('/stok')}
+            className="bg-zinc-700 hover:bg-zinc-600"
+          >
+            <Package className="w-4 h-4 mr-2" />
+            Stok
+          </Button>
 
           <Button
             onClick={() => setEkleModal(true)}
