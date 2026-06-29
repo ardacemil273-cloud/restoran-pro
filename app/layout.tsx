@@ -120,6 +120,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       baslik: 'Analiz',
       items: [
         { ad: 'Patron Merkezi', path: '/patron-merkezi', icon: Crown },
+        { ad: 'AI Müşteri Analitikleri', path: '/ai-musteri-analitikleri', icon: Brain },
         { ad: 'Raporlar', path: '/rapor', icon: BarChart3 },
         { ad: 'Garson Performans', path: '/garson-performans', icon: Award },
         { ad: 'AI Stok Tahmin', path: '/stok-tahmin', icon: Brain },
