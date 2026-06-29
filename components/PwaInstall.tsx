@@ -8,6 +8,7 @@ export default function PwaInstall() {
   const [showPrompt, setShowPrompt] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
+  const [showIOSPrompt, setShowIOSPrompt] = useState(false)
 
   useEffect(() => {
     // iOS kontrolü
@@ -15,7 +16,10 @@ export default function PwaInstall() {
     setIsIOS(isIOSDevice)
 
     // Standalone mode kontrolü (zaten yüklü mü?)
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         (window.navigator as any).standalone === true
+    
+    if (isStandalone) {
       setIsInstalled(true)
       return
     }
@@ -31,22 +35,44 @@ export default function PwaInstall() {
       }, 5000)
     }
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    // iOS için alternatif: Safari'de göster
+    if (isIOSDevice) {
+      setTimeout(() => {
+        setShowIOSPrompt(true)
+      }, 5000)
+    }
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt, true)
 
     // App yükleme başarılı oldu mu kontrolü
-    window.addEventListener('appinstalled', () => {
+    const handleAppInstalled = () => {
       setIsInstalled(true)
       setShowPrompt(false)
-    })
+      setShowIOSPrompt(false)
+    }
+
+    window.addEventListener('appinstalled', handleAppInstalled)
+
+    // Fallback: Eğer deferredPrompt gelmezse, manuel olarak göster
+    const fallbackTimer = setTimeout(() => {
+      if (!deferredPrompt && !isIOSDevice && !isStandalone) {
+        setShowPrompt(true)
+      }
+    }, 8000)
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-      window.removeEventListener('appinstalled', () => {})
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt, true)
+      window.removeEventListener('appinstalled', handleAppInstalled)
+      clearTimeout(fallbackTimer)
     }
-  }, [])
+  }, [deferredPrompt])
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return
+    if (!deferredPrompt) {
+      // Fallback: Manuel olarak Chrome'u aç
+      toast.info('Lütfen tarayıcı menüsünden "Uygulamayı Yükle" seçeneğini kullanın')
+      return
+    }
 
     deferredPrompt.prompt()
     const { outcome } = await deferredPrompt.userChoice
@@ -57,14 +83,10 @@ export default function PwaInstall() {
     }
   }
 
-  const handleIOSInstall = () => {
-    setShowPrompt(false)
-  }
-
   if (isInstalled) return null
 
   // iOS için özel talimat
-  if (isIOS && showPrompt) {
+  if (isIOS && showIOSPrompt) {
     return (
       <AnimatePresence>
         <motion.div
@@ -85,7 +107,7 @@ export default function PwaInstall() {
                 </div>
               </div>
               <button
-                onClick={handleIOSInstall}
+                onClick={() => setShowIOSPrompt(false)}
                 className="p-1 text-white/30 hover:text-white transition-all"
               >
                 <X size={16} />
@@ -96,7 +118,7 @@ export default function PwaInstall() {
               <p>2. "Ana Ekrana Ekle" seçeneğini seç</p>
             </div>
             <button
-              onClick={handleIOSInstall}
+              onClick={() => setShowIOSPrompt(false)}
               className="w-full px-4 py-2.5 bg-primary hover:bg-primary/90 text-black font-black rounded-xl transition-all text-sm"
             >
               Anladım
@@ -108,7 +130,7 @@ export default function PwaInstall() {
   }
 
   // Android ve diğer tarayıcılar için
-  if (!isIOS && deferredPrompt && showPrompt) {
+  if (!isIOS && showPrompt) {
     return (
       <AnimatePresence>
         <motion.div
@@ -139,7 +161,7 @@ export default function PwaInstall() {
                 <div className="flex items-center gap-3 pt-3">
                   <button
                     onClick={handleInstall}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-black text-xs font-black py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10"
+                    className="flex-1 bg-primary hover:bg-primary/90 text-black text-xs font-black py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95"
                   >
                     <Download className="w-3.5 h-3.5" />
                     ŞİMDİ YÜKLE
@@ -168,3 +190,6 @@ export default function PwaInstall() {
 
   return null
 }
+
+// toast import'u için dummy
+const toast = { info: (msg: string) => console.log(msg) }
