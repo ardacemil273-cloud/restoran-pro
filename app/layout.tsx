@@ -110,6 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       items: [
         { ad: 'Raporlar', path: '/rapor', icon: BarChart3 },
         { ad: 'Garson Performans', path: '/garson-performans', icon: Award },
+        { ad: 'AI Stok Tahmin', path: '/stok-tahmin', icon: Brain },
         { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain },
       ]
     },
