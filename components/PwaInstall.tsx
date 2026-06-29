@@ -1,11 +1,16 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Download, X, Smartphone } from 'lucide-react'
+import { Download, X, Smartphone, AlertCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
 export default function PwaInstall() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
@@ -18,8 +23,10 @@ export default function PwaInstall() {
     setIsIOS(isIOSDevice)
 
     // Standalone mode kontrolü
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         (window.navigator as any).standalone === true
+    const isStandalone = 
+      window.matchMedia('(display-mode: standalone)').matches || 
+      (window.navigator as any).standalone === true ||
+      document.referrer.includes('android-app://')
     
     if (isStandalone) {
       setIsInstalled(true)
@@ -29,75 +36,72 @@ export default function PwaInstall() {
     // beforeinstallprompt event'ini yakala
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
-      console.log('beforeinstallprompt triggered')
-      setDeferredPrompt(e)
+      const event = e as BeforeInstallPromptEvent
+      setDeferredPrompt(event)
       
-      // 5 saniye sonra göster
-      setTimeout(() => {
+      // 4 saniye sonra göster
+      const timer = setTimeout(() => {
         setShowPrompt(true)
-      }, 5000)
+      }, 4000)
+
+      return () => clearTimeout(timer)
     }
 
     // iOS için alternatif
     if (isIOSDevice) {
-      setTimeout(() => {
+      const iosTimer = setTimeout(() => {
         setShowIOSPrompt(true)
-      }, 5000)
+      }, 4000)
+      return () => clearTimeout(iosTimer)
     }
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt, true)
+    // Event listener'ı ekle
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt, { capture: true })
 
     // App yükleme başarılı oldu mu
     const handleAppInstalled = () => {
-      console.log('App installed successfully')
       setIsInstalled(true)
       setShowPrompt(false)
       setShowIOSPrompt(false)
       setIsInstalling(false)
+      setDeferredPrompt(null)
       toast.success('✅ Uygulama başarıyla yüklendi!')
     }
 
     window.addEventListener('appinstalled', handleAppInstalled)
 
-    // Fallback timer
-    const fallbackTimer = setTimeout(() => {
-      if (!deferredPrompt && !isIOSDevice && !isStandalone) {
-        console.log('Fallback: showing install prompt')
-        setShowPrompt(true)
-      }
-    }, 8000)
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt, true)
       window.removeEventListener('appinstalled', handleAppInstalled)
-      clearTimeout(fallbackTimer)
     }
   }, [])
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
-      toast.info('Tarayıcı menüsünden "Uygulamayı Yükle" seçeneğini kullanın')
+      toast.error('Tarayıcı henüz hazır değil. Lütfen sayfayı yenileyin.')
       return
     }
 
     setIsInstalling(true)
     
     try {
-      deferredPrompt.prompt()
+      // Prompt'u göster
+      await deferredPrompt.prompt()
+      
+      // Kullanıcı seçimini bekle
       const { outcome } = await deferredPrompt.userChoice
 
       if (outcome === 'accepted') {
-        console.log('User accepted install prompt')
+        toast.success('✅ Uygulama yükleniyor...')
         setDeferredPrompt(null)
         setShowPrompt(false)
-        toast.success('✅ Uygulama yükleniyor...')
       } else {
-        console.log('User dismissed install prompt')
+        toast.info('Yükleme iptal edildi')
         setIsInstalling(false)
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Install error:', err)
-      toast.error('Yükleme başarısız oldu')
+      toast.error('Yükleme başarısız: ' + (err?.message || 'Bilinmeyen hata'))
       setIsInstalling(false)
     }
   }
@@ -132,9 +136,9 @@ export default function PwaInstall() {
                 <X size={16} />
               </button>
             </div>
-            <div className="text-xs text-white/60 space-y-1 ml-15 mb-3">
-              <p>1. Paylaş butonuna (↗️) tıkla</p>
-              <p>2. "Ana Ekrana Ekle" seçeneğini seç</p>
+            <div className="text-xs text-white/60 space-y-1 mb-3">
+              <p>1️⃣ Paylaş butonuna (↗️) tıkla</p>
+              <p>2️⃣ "Ana Ekrana Ekle" seçeneğini seç</p>
             </div>
             <button
               onClick={() => setShowIOSPrompt(false)}
@@ -180,8 +184,8 @@ export default function PwaInstall() {
                 <div className="flex items-center gap-3 pt-3">
                   <button
                     onClick={handleInstall}
-                    disabled={isInstalling}
-                    className="flex-1 bg-primary hover:bg-primary/90 disabled:opacity-50 text-black text-xs font-black py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95"
+                    disabled={isInstalling || !deferredPrompt}
+                    className="flex-1 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-black text-xs font-black py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95"
                   >
                     {isInstalling ? (
                       <>
