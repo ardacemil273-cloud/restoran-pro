@@ -2,13 +2,14 @@
   "name": "Restoran Pro - Dijital Restoran Yönetim Sistemi",
   "short_name": "Restoran Pro",
   "description": "Profesyonel Restoran Yönetim Sistemi - QR Menü, Garson Paneli, Mutfak Ekranı, Kasa ve AI Analiz",
-  "start_url": "/masalar",
+  "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#18181b",
-  "theme_color": "#06b6d4",
+  "theme_color": "#f59e0b",
   "prefer_related_applications": false,
+  "categories": ["business", "productivity"],
   "screenshots": [
     {
       "src": "/icons/icon-192x192.png",
@@ -27,93 +28,70 @@
     {
       "src": "/icons/icon-72x72.png",
       "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icons/icon-96x96.png",
       "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icons/icon-128x128.png",
       "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icons/icon-144x144.png",
       "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icons/icon-152x152.png",
       "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-384x384.png",
       "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
     {
       "name": "Masalar",
       "short_name": "Masalar",
-      "description": "Masa yönetimi ve sipariş takibi",
+      "description": "Masa haritasına git",
       "url": "/masalar",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
-      "name": "Garson Paneli",
-      "short_name": "Garson",
-      "description": "Garson sipariş paneli",
-      "url": "/garson",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
-    },
-    {
-      "name": "Mutfak Ekranı",
-      "short_name": "Mutfak",
-      "description": "Mutfak sipariş ekranı",
-      "url": "/garson/mutfak",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
-    },
-    {
-      "name": "Kasa",
-      "short_name": "Kasa",
-      "description": "Kasa ve ödeme işlemleri",
-      "url": "/kasa",
-      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
+      "name": "Siparişler",
+      "short_name": "Siparişler",
+      "description": "Siparişleri görüntüle",
+      "url": "/siparisler",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
-  ],
-  "categories": ["food", "business", "productivity"],
-  "lang": "tr",
-  "dir": "ltr",
-  "share_target": {
-    "action": "/share",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  }
+  ]
 }
