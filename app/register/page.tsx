@@ -1,253 +1,209 @@
 'use client'
-import { useState, useEffect, Suspense } from 'react'
+import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { toast } from 'sonner'
-import { PAKETLER } from '@/lib/paketler'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChefHat, Eye, EyeOff, Check } from 'lucide-react'
+import { toast } from 'sonner'
+import { ChefHat, Eye, EyeOff, ArrowRight, Loader2, Check } from 'lucide-react'
 
-function RegisterIcerik() {
+export default function RegisterPage() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [sifre, setSifre] = useState('')
   const [restoranAd, setRestoranAd] = useState('')
-  const [paketTuru, setPaketTuru] = useState<'basit' | 'big' | 'pro'>('basit')
   const [loading, setLoading] = useState(false)
   const [goster, setGoster] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
-
-  useEffect(() => {
-    const paket = searchParams.get('paket')
-    if (paket === 'big' || paket === 'pro') {
-      setPaketTuru(paket)
-    }
-  }, [searchParams])
-
-  const slugOlustur = (ad: string) => {
-    const slug = ad
-      .toLowerCase()
-      .replace(/ğ/g, 'g')
-      .replace(/ü/g, 'u')
-      .replace(/ş/g, 's')
-      .replace(/ı/g, 'i')
-      .replace(/ö/g, 'o')
-      .replace(/ç/g, 'c')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-    return `${slug}-${Math.floor(Math.random() * 9000) + 1000}`
-  }
 
   const handleRegister = async () => {
-    if (!email || !password || !restoranAd) return toast.error('Tüm alanları doldur')
-    if (password.length < 6) return toast.error('Şifre en az 6 karakter olmalı')
+    if (!email || !sifre || !restoranAd) {
+      toast.error('Tüm alanları doldurunuz')
+      return
+    }
+    if (sifre.length < 6) {
+      toast.error('Şifre en az 6 karakter olmalıdır')
+      return
+    }
     setLoading(true)
-
-    // 1. Kullanıcı oluştur
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { restoran_ad: restoranAd }
-      }
-    })
-
-    if (authError) {
+    const { data, error } = await supabase.auth.signUp({ email, password: sifre })
+    if (error) {
+      toast.error('Kayıt hatası: ' + error.message)
       setLoading(false)
-      if (authError.message.includes('already registered')) {
-        return toast.error('Bu email zaten kayıtlı. Giriş yap.')
-      }
-      return toast.error('Kayıt hatası: ' + authError.message)
+      return
     }
-
-    if (!authData.user) {
-      setLoading(false)
-      return toast.error('Kullanıcı oluşturulamadı')
-    }
-
-    // 2. Session kontrol et
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      setLoading(false)
-      return toast.error('E-posta doğrulaması gerekiyor. Lütfen e-postanızı kontrol edin.')
-    }
-
-    // 3. Paket bitiş tarihi
-    const bitisTarihi = paketTuru === 'basit'
-      ? null
-      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-
-    // 4. Restoran oluştur
-    const { data: restoran, error: restoranError } = await supabase
-      .from('restoranlar')
-      .insert({
+    if (data.user) {
+      const { error: restoranError } = await supabase.from('restoranlar').insert([{
         ad: restoranAd,
-        sahibi_id: authData.user.id,
-        slug: slugOlustur(restoranAd),
-        paket_turu: paketTuru,
-        paket_bitis_tarihi: bitisTarihi
-      })
-      .select()
-      .single()
-
-    if (restoranError) {
-      setLoading(false)
-      return toast.error('Restoran hatası: ' + restoranError.message)
+        user_id: data.user.id,
+        slug: restoranAd.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      }])
+      if (restoranError) console.error('Restoran oluşturma hatası:', restoranError)
     }
-
-    // 5. Kullanıcı-restoran ilişkisi
-    await supabase.from('kullanici_restoran').insert({
-      user_id: authData.user.id,
-      restoran_id: restoran.id
-    })
-
+    toast.success('Kayıt başarılı! Giriş yapılıyor...')
+    router.push('/masalar')
     setLoading(false)
-    if (paketTuru !== 'basit') {
-      toast.success(`${PAKETLER[paketTuru].ad} paket 30 gün ücretsiz! Hoş geldiniz!`)
-    } else {
-      toast.success('Kayıt başarılı! Hoş geldiniz!')
-    }
-    window.location.href = '/masalar'
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white p-4 flex items-center justify-center">
-      <div className="w-full max-w-2xl">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <ChefHat className="w-8 h-8 text-yellow-500" />
-          <span className="text-2xl font-bold text-yellow-500">Restoran Pro</span>
+    <div className="min-h-screen flex" style={{backgroundColor: 'hsl(224,71%,4%)'}}>
+      {/* Left Panel */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12" style={{background: 'linear-gradient(135deg, hsl(220,14%,6%) 0%, hsl(224,71%,8%) 100%)'}}>
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full opacity-10" style={{background: 'radial-gradient(circle, #f59e0b, transparent)'}} />
+          <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full opacity-10" style={{background: 'radial-gradient(circle, #f97316, transparent)'}} />
         </div>
-        <Card className="p-6 bg-zinc-800 border-zinc-700">
-          <h1 className="text-2xl font-bold mb-6 text-center">Ücretsiz Hesap Oluştur</h1>
 
-          <div className="space-y-4 mb-6">
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-xl" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)'}}>
+            <ChefHat className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-white">Restoran Pro</h1>
+            <p className="text-xs font-medium" style={{color: 'rgba(245,158,11,0.7)'}}>Yönetim Sistemi</p>
+          </div>
+        </div>
+
+        <div className="relative z-10 space-y-6">
+          <div>
+            <h2 className="text-4xl font-black text-white leading-tight mb-4">
+              14 Gün<br />
+              <span style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+                Ücretsiz Deneyin
+              </span>
+            </h2>
+            <p className="text-lg" style={{color: 'rgba(255,255,255,0.5)'}}>
+              Kredi kartı gerekmez. İstediğiniz zaman iptal edin.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              'Sınırsız masa ve sipariş',
+              'QR menü ve garson paneli',
+              'Gerçek zamanlı raporlar',
+              'AI destekli analiz',
+              '7/24 teknik destek',
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{background: 'rgba(245,158,11,0.2)', border: '1px solid rgba(245,158,11,0.4)'}}>
+                  <Check className="w-3 h-3" style={{color: '#f59e0b'}} />
+                </div>
+                <span className="text-sm font-medium" style={{color: 'rgba(255,255,255,0.7)'}}>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10 p-4 rounded-2xl" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
+          <p className="text-sm italic" style={{color: 'rgba(255,255,255,0.6)'}}>
+            "Restoran Pro sayesinde siparişlerimizi %40 daha hızlı alıyoruz. Mutfak ekranı harika!"
+          </p>
+          <p className="text-xs mt-2 font-semibold" style={{color: '#f59e0b'}}>— Ahmet K., İstanbul</p>
+        </div>
+      </div>
+
+      {/* Right Panel - Register Form */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-md">
+          <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)'}}>
+              <ChefHat className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-xl font-black text-white">Restoran Pro</h1>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-3xl font-black text-white mb-2">Hesap Oluşturun</h2>
+            <p style={{color: 'rgba(255,255,255,0.4)'}}>14 gün ücretsiz, kredi kartı gerekmez</p>
+          </div>
+
+          <div className="space-y-5">
             <div>
-              <label className="text-sm text-zinc-400 mb-1 block">Restoran Adı</label>
-              <Input
+              <label className="block text-sm font-semibold mb-2" style={{color: 'rgba(255,255,255,0.7)'}}>
+                Restoran Adı
+              </label>
+              <input
                 type="text"
-                placeholder="Örn: Usta Döner"
+                placeholder="Örn: Lezzet Durağı"
                 value={restoranAd}
-                onChange={(e) => setRestoranAd(e.target.value)}
-                className="bg-zinc-700 border-zinc-600"
+                onChange={e => setRestoranAd(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl text-white placeholder-white/30 outline-none transition-all text-sm"
+                style={{backgroundColor: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.1)'}}
+                onFocus={e => { e.target.style.borderColor = '#f59e0b'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)' }}
+                onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none' }}
               />
             </div>
+
             <div>
-              <label className="text-sm text-zinc-400 mb-1 block">E-posta</label>
-              <Input
+              <label className="block text-sm font-semibold mb-2" style={{color: 'rgba(255,255,255,0.7)'}}>
+                E-posta Adresi
+              </label>
+              <input
                 type="email"
-                placeholder="ornek@email.com"
+                placeholder="ornek@restoran.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-zinc-700 border-zinc-600"
+                onChange={e => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl text-white placeholder-white/30 outline-none transition-all text-sm"
+                style={{backgroundColor: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.1)'}}
+                onFocus={e => { e.target.style.borderColor = '#f59e0b'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)' }}
+                onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none' }}
               />
             </div>
+
             <div>
-              <label className="text-sm text-zinc-400 mb-1 block">Şifre</label>
+              <label className="block text-sm font-semibold mb-2" style={{color: 'rgba(255,255,255,0.7)'}}>
+                Şifre
+              </label>
               <div className="relative">
-                <Input
+                <input
                   type={goster ? 'text' : 'password'}
                   placeholder="En az 6 karakter"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-zinc-700 border-zinc-600 pr-10"
+                  value={sifre}
+                  onChange={e => setSifre(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleRegister()}
+                  className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-white/30 outline-none transition-all text-sm"
+                  style={{backgroundColor: 'rgba(255,255,255,0.06)', border: '1.5px solid rgba(255,255,255,0.1)'}}
+                  onFocus={e => { e.target.style.borderColor = '#f59e0b'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)' }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none' }}
                 />
                 <button
                   type="button"
                   onClick={() => setGoster(!goster)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{color: 'rgba(255,255,255,0.3)'}}
                 >
                   {goster ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handleRegister}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-black text-sm transition-all disabled:opacity-60"
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+                boxShadow: '0 4px 16px rgba(245,158,11,0.3)',
+              }}
+            >
+              {loading ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /><span>Hesap oluşturuluyor...</span></>
+              ) : (
+                <><span>Ücretsiz Hesap Oluştur</span><ArrowRight className="w-4 h-4" /></>
+              )}
+            </button>
           </div>
 
-          <div className="mb-6">
-            <p className="font-bold mb-3 text-center text-sm text-zinc-300">Paket Seç</p>
-            <div className="grid md:grid-cols-3 gap-3">
-              {Object.entries(PAKETLER).map(([key, paket]) => (
-                <Card
-                  key={key}
-                  onClick={() => setPaketTuru(key as 'basit' | 'big' | 'pro')}
-                  className={`p-4 cursor-pointer border-2 transition ${
-                    paketTuru === key
-                      ? 'bg-yellow-500/20 border-yellow-500'
-                      : 'bg-zinc-700 border-zinc-600 hover:border-zinc-500'
-                  }`}
-                >
-                  <div className="text-center">
-                    {paketTuru === key && (
-                      <div className="flex justify-center mb-1">
-                        <Check className="w-4 h-4 text-yellow-500" />
-                      </div>
-                    )}
-                    <h3 className="font-bold text-lg">{paket.ad}</h3>
-                    <p className="text-2xl font-bold my-2 text-yellow-500">
-                      {paket.fiyat === 0 ? 'Ücretsiz' : `${paket.fiyat}₺/ay`}
-                    </p>
-                    {key !== 'basit' && (
-                      <p className="text-xs text-green-400 font-bold">30 gün ücretsiz dene</p>
-                    )}
-                  </div>
-                  <div className="mt-3 space-y-1 text-xs text-zinc-300">
-                    <p>{paket.ozellikler.garson_panel ? '✅' : '❌'} Garson Paneli</p>
-                    <p>{paket.ozellikler.kasa ? '✅' : '❌'} Kasa</p>
-                    <p>{paket.ozellikler.qr_menu ? '✅' : '❌'} QR Menü</p>
-                    <p>{paket.ozellikler.rapor ? '✅' : '❌'} Raporlama</p>
-                    <p className="pt-2 border-t border-zinc-600 mt-2 text-zinc-400">
-                      {paket.limit.masa === 999 ? 'Sınırsız' : paket.limit.masa} Masa •{' '}
-                      {paket.limit.urun === 999 ? 'Sınırsız' : paket.limit.urun} Ürün
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </div>
+          <div className="mt-6 text-center">
+            <p className="text-sm" style={{color: 'rgba(255,255,255,0.4)'}}>
+              Zaten hesabınız var mı?{' '}
+              <Link href="/login" className="font-bold hover:underline" style={{color: '#f59e0b'}}>
+                Giriş Yapın
+              </Link>
+            </p>
           </div>
-
-          <Button
-            onClick={handleRegister}
-            disabled={loading}
-            className="w-full bg-yellow-500 text-black font-bold hover:bg-yellow-400 text-base py-6"
-          >
-            {loading ? 'Kaydediliyor...' : `${PAKETLER[paketTuru].ad} Paket ile Başla`}
-          </Button>
-
-          <p className="text-center text-xs text-zinc-500 mt-3">
-            Kayıt olarak{' '}
-            <span className="text-zinc-400">Kullanım Koşulları</span>
-            {' '}ve{' '}
-            <span className="text-zinc-400">Gizlilik Politikası</span>
-            &apos;nı kabul etmiş olursunuz.
-          </p>
-
-          <p className="text-center text-sm text-zinc-400 mt-4">
-            Zaten hesabın var mı?{' '}
-            <Link href="/login" className="text-yellow-500 hover:text-yellow-400 font-bold">
-              Giriş Yap
-            </Link>
-          </p>
-          <div className="text-center mt-2">
-            <Link href="/" className="text-xs text-zinc-500 hover:text-zinc-400">
-              Ana Sayfaya Dön
-            </Link>
-          </div>
-        </Card>
+        </div>
       </div>
     </div>
-  )
-}
-
-export default function RegisterPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500" />
-      </div>
-    }>
-      <RegisterIcerik />
-    </Suspense>
   )
 }

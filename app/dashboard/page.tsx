@@ -1,16 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import {
-  ShoppingCart, Users, TrendingUp, Package, ChefHat,
-  QrCode, BarChart3, CalendarDays, Tag, Warehouse,
-  TrendingDown, Brain, UtensilsCrossed, Phone, ArrowRight,
-  Clock, CheckCircle, AlertTriangle, DollarSign, Activity,
-  Zap, Flame, Target
+  ShoppingCart, Users, Package, ChefHat, QrCode, BarChart3,
+  CalendarDays, Tag, Warehouse, TrendingDown, Brain, UtensilsCrossed,
+  Phone, DollarSign, Zap, Flame, AlertTriangle, CheckCircle,
+  Clock, ArrowRight, TrendingUp, Activity, MapPin, MessageCircle,
+  Mic, Sparkles, Crown, Building2, Shield, FileText, Award, RefreshCw
 } from 'lucide-react'
 
 type Stats = {
@@ -26,18 +23,13 @@ type Stats = {
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({
-    aktifSiparis: 0,
-    bugunCiro: 0,
-    toplamMasa: 0,
-    doluMasa: 0,
-    kritikStok: 0,
-    bugunRezervasyonlar: 0,
-    toplamMusteri: 0,
-    bekleyenSiparis: 0
+    aktifSiparis: 0, bugunCiro: 0, toplamMasa: 0, doluMasa: 0,
+    kritikStok: 0, bugunRezervasyonlar: 0, toplamMusteri: 0, bekleyenSiparis: 0
   })
   const [restoran, setRestoran] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [sonSiparisler, setSonSiparisler] = useState<any[]>([])
+  const [refreshing, setRefreshing] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -49,24 +41,11 @@ export default function DashboardPage() {
   const loadData = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return router.push('/login')
-
-    const { data: restoranData } = await supabase
-      .from('restoranlar')
-      .select('*')
-      .eq('sahibi_id', user.id)
-      .single()
-
-    if (!restoranData) {
-      setLoading(false)
-      return
-    }
-
+    const { data: restoranData } = await supabase.from('restoranlar').select('*').eq('sahibi_id', user.id).single()
+    if (!restoranData) { setLoading(false); return }
     setRestoran(restoranData)
-
-    const bugun = new Date()
-    bugun.setHours(0, 0, 0, 0)
+    const bugun = new Date(); bugun.setHours(0, 0, 0, 0)
     const bugunStr = bugun.toISOString()
-
     const [masaRes, siparisRes, stokRes, musteriRes, rezervasyonRes, sonSiparisRes] = await Promise.all([
       supabase.from('masalar').select('id, durum').eq('restoran_id', restoranData.id),
       supabase.from('siparisler').select('id, toplam_tutar, durum, created_at').eq('restoran_id', restoranData.id).gte('created_at', bugunStr),
@@ -75,315 +54,281 @@ export default function DashboardPage() {
       supabase.from('rezervasyonlar').select('id').eq('restoran_id', restoranData.id).gte('tarih', bugunStr.split('T')[0]).eq('durum', 'bekliyor'),
       supabase.from('siparisler').select('id, toplam_tutar, durum, created_at, masalar(ad)').eq('restoran_id', restoranData.id).order('created_at', { ascending: false }).limit(5)
     ])
-
     const masalar = masaRes.data || []
     const siparisler = siparisRes.data || []
     const urunler = stokRes.data || []
-    const rezervasyonlar = rezervasyonRes.data || []
-
-    const doluMasaSayisi = masalar.filter((m: any) => m.durum === 'dolu').length
-    const aktifSiparisSayisi = siparisler.filter((s: any) => s.durum !== 'tamamlandi' && s.durum !== 'iptal').length
-    const bugunCiroToplam = siparisler.filter((s: any) => s.durum === 'tamamlandi' || s.durum === 'odendi').reduce((sum: number, s: any) => sum + (s.toplam_tutar || 0), 0)
-    const kritikStokSayisi = urunler.filter((u: any) => u.stok !== null && u.stok <= u.kritik_stok).length
-    const bekleyenSiparisSayisi = siparisler.filter((s: any) => s.durum === 'hazir').length
-
     setStats({
-      aktifSiparis: aktifSiparisSayisi,
-      bugunCiro: bugunCiroToplam,
+      aktifSiparis: siparisler.filter((s: any) => s.durum !== 'tamamlandi' && s.durum !== 'iptal').length,
+      bugunCiro: siparisler.filter((s: any) => s.durum === 'tamamlandi' || s.durum === 'odendi').reduce((sum: number, s: any) => sum + (s.toplam_tutar || 0), 0),
       toplamMasa: masalar.length,
-      doluMasa: doluMasaSayisi,
-      kritikStok: kritikStokSayisi,
-      bugunRezervasyonlar: rezervasyonlar.length,
+      doluMasa: masalar.filter((m: any) => m.durum === 'dolu').length,
+      kritikStok: urunler.filter((u: any) => u.stok !== null && u.stok <= u.kritik_stok).length,
+      bugunRezervasyonlar: (rezervasyonRes.data || []).length,
       toplamMusteri: musteriRes.count || 0,
-      bekleyenSiparis: bekleyenSiparisSayisi
+      bekleyenSiparis: siparisler.filter((s: any) => s.durum === 'hazir').length
     })
-
     setSonSiparisler(sonSiparisRes.data || [])
     setLoading(false)
   }
 
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await loadData()
+    setRefreshing(false)
+  }
+
   const hizliErisim = [
-    { ad: 'Masalar', path: '/masalar', icon: ChefHat, renk: 'bg-yellow-500', aciklama: 'Masa durumları' },
-    { ad: 'Siparişler', path: '/siparisler', icon: ShoppingCart, renk: 'bg-orange-500', aciklama: 'Aktif siparişler' },
-    { ad: 'Kasa', path: '/kasa', icon: DollarSign, renk: 'bg-green-500', aciklama: 'Hızlı satış' },
-    { ad: 'QR Kodlar', path: '/qr-kodlar', icon: QrCode, renk: 'bg-blue-500', aciklama: 'QR yönetimi' },
-    { ad: 'Ürünler', path: '/urunler', icon: Package, renk: 'bg-purple-500', aciklama: 'Menü yönetimi' },
-    { ad: 'Kategoriler', path: '/kategoriler', icon: Tag, renk: 'bg-pink-500', aciklama: 'Kategori yönetimi' },
-    { ad: 'Garsonlar', path: '/garsonlar', icon: UtensilsCrossed, renk: 'bg-cyan-500', aciklama: 'Personel yönetimi' },
-    { ad: 'Müşteriler', path: '/musteriler', icon: Users, renk: 'bg-indigo-500', aciklama: 'CRM' },
-    { ad: 'Rezervasyon', path: '/rezervasyon', icon: CalendarDays, renk: 'bg-teal-500', aciklama: 'Masa rezervasyonu' },
-    { ad: 'Stok Takibi', path: '/stok', icon: Warehouse, renk: 'bg-red-500', aciklama: 'Stok yönetimi' },
-    { ad: 'Gider Takibi', path: '/giderler', icon: TrendingDown, renk: 'bg-rose-500', aciklama: 'Gider analizi' },
-    { ad: 'Raporlar', path: '/rapor', icon: BarChart3, renk: 'bg-violet-500', aciklama: 'Satış raporları' },
-    { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain, renk: 'bg-emerald-500', aciklama: 'Yapay zeka analizi' },
-    { ad: 'İndirimler', path: '/indirimler', icon: Tag, renk: 'bg-amber-500', aciklama: 'Kupon yönetimi' },
-    { ad: 'Aramalar', path: '/aramalar', icon: Phone, renk: 'bg-lime-500', aciklama: 'Paket siparişi' },
-    { ad: 'Ayarlar', path: '/ayarlar', icon: Activity, renk: 'bg-zinc-500', aciklama: 'Restoran ayarları' },
+    { ad: 'Masalar', path: '/masalar', icon: ChefHat, renk: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+    { ad: 'Siparişler', path: '/siparisler', icon: ShoppingCart, renk: '#f97316', bg: 'rgba(249,115,22,0.12)' },
+    { ad: 'Kasa', path: '/kasa', icon: DollarSign, renk: '#22c55e', bg: 'rgba(34,197,94,0.12)' },
+    { ad: 'QR Kodlar', path: '/qr-kodlar', icon: QrCode, renk: '#3b82f6', bg: 'rgba(59,130,246,0.12)' },
+    { ad: 'Ürünler', path: '/urunler', icon: Package, renk: '#a855f7', bg: 'rgba(168,85,247,0.12)' },
+    { ad: 'Kategoriler', path: '/kategoriler', icon: Tag, renk: '#ec4899', bg: 'rgba(236,72,153,0.12)' },
+    { ad: 'Garsonlar', path: '/garsonlar', icon: UtensilsCrossed, renk: '#06b6d4', bg: 'rgba(6,182,212,0.12)' },
+    { ad: 'Müşteriler', path: '/musteriler', icon: Users, renk: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
+    { ad: 'Rezervasyon', path: '/rezervasyon', icon: CalendarDays, renk: '#14b8a6', bg: 'rgba(20,184,166,0.12)' },
+    { ad: 'Stok Takibi', path: '/stok', icon: Warehouse, renk: '#ef4444', bg: 'rgba(239,68,68,0.12)' },
+    { ad: 'Gider Takibi', path: '/giderler', icon: TrendingDown, renk: '#f43f5e', bg: 'rgba(244,63,94,0.12)' },
+    { ad: 'Raporlar', path: '/rapor', icon: BarChart3, renk: '#8b5cf6', bg: 'rgba(139,92,246,0.12)' },
+    { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain, renk: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+    { ad: 'İndirimler', path: '/indirimler', icon: Tag, renk: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+    { ad: 'Aramalar', path: '/aramalar', icon: Phone, renk: '#84cc16', bg: 'rgba(132,204,22,0.12)' },
+    { ad: 'Ayarlar', path: '/ayarlar', icon: Activity, renk: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
   ]
+
+  const statKartlari = [
+    {
+      baslik: 'Aktif Sipariş',
+      deger: stats.aktifSiparis,
+      icon: ShoppingCart,
+      renk: '#f97316',
+      bg: 'rgba(249,115,22,0.12)',
+      path: '/siparisler',
+      extra: stats.bekleyenSiparis > 0 ? `${stats.bekleyenSiparis} hazır bekliyor` : null,
+      extraRenk: '#f59e0b',
+      pulse: stats.aktifSiparis > 0,
+    },
+    {
+      baslik: 'Bugünkü Ciro',
+      deger: `${stats.bugunCiro.toLocaleString('tr-TR')}₺`,
+      icon: DollarSign,
+      renk: '#22c55e',
+      bg: 'rgba(34,197,94,0.12)',
+      path: '/kasa',
+      extra: null,
+      pulse: false,
+    },
+    {
+      baslik: 'Dolu Masa',
+      deger: `${stats.doluMasa}/${stats.toplamMasa}`,
+      icon: ChefHat,
+      renk: '#3b82f6',
+      bg: 'rgba(59,130,246,0.12)',
+      path: '/masalar',
+      extra: stats.toplamMasa > 0 ? `%${Math.round(stats.doluMasa / stats.toplamMasa * 100)} doluluk` : null,
+      extraRenk: '#3b82f6',
+      pulse: false,
+    },
+    {
+      baslik: 'Kritik Stok',
+      deger: stats.kritikStok,
+      icon: AlertTriangle,
+      renk: stats.kritikStok > 0 ? '#ef4444' : '#22c55e',
+      bg: stats.kritikStok > 0 ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)',
+      path: '/stok',
+      extra: stats.kritikStok > 0 ? 'Acil kontrol gerekli' : 'Stok durumu iyi',
+      extraRenk: stats.kritikStok > 0 ? '#ef4444' : '#22c55e',
+      pulse: stats.kritikStok > 0,
+    },
+  ]
+
+  const getSiparisRenk = (durum: string) => {
+    switch(durum) {
+      case 'tamamlandi': case 'odendi': return { color: '#22c55e', bg: 'rgba(34,197,94,0.12)', label: 'Tamamlandı' }
+      case 'hazirlaniyor': return { color: '#f97316', bg: 'rgba(249,115,22,0.12)', label: 'Hazırlanıyor' }
+      case 'hazir': return { color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', label: 'Hazır' }
+      case 'iptal': return { color: '#ef4444', bg: 'rgba(239,68,68,0.12)', label: 'İptal' }
+      default: return { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', label: 'Bekliyor' }
+    }
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 p-6">
+      <div className="p-6 space-y-6" style={{backgroundColor: 'hsl(224,71%,4%)'}}>
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-14 h-14 bg-zinc-700 rounded-2xl animate-pulse" />
+          <div className="w-14 h-14 rounded-2xl skeleton" />
           <div className="space-y-2">
-            <div className="h-8 w-48 bg-zinc-700 rounded animate-pulse" />
-            <div className="h-4 w-32 bg-zinc-700 rounded animate-pulse" />
+            <div className="h-8 w-48 rounded-lg skeleton" />
+            <div className="h-4 w-32 rounded skeleton" />
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[1,2,3,4].map(i => <div key={i} className="h-32 bg-zinc-800 rounded-2xl animate-pulse" />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-32 rounded-2xl skeleton" />)}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-24 bg-zinc-800 rounded-xl animate-pulse" />)}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-20 rounded-xl skeleton" />)}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 p-6 space-y-8">
-      {/* Başlık Bölümü */}
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center gap-4 mb-2">
-          <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg shadow-yellow-500/30">
-            <ChefHat className="w-8 h-8 text-white" />
+    <div className="p-4 lg:p-6 space-y-6" style={{backgroundColor: 'hsl(224,71%,4%)', minHeight: '100vh'}}>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)', boxShadow: '0 4px 16px rgba(245,158,11,0.3)'}}>
+            <ChefHat className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-4xl font-black text-white">
+            <h1 className="text-2xl font-black text-white">
               Hoş geldin, {restoran?.ad || 'Restoran'}! 👋
             </h1>
-            <p className="text-zinc-400 text-sm mt-1">
+            <p className="text-sm mt-0.5" style={{color: 'rgba(255,255,255,0.4)'}}>
               {new Date().toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
         </div>
-      </motion.div>
-
-      {/* Ana İstatistikler - Premium Grid */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Aktif Siparişler */}
-        <div 
-          onClick={() => router.push('/siparisler')}
-          className="glass-card-hover p-6 cursor-pointer group"
+        <button
+          onClick={handleRefresh}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
+          style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)'}}
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-              <ShoppingCart className="w-6 h-6 text-orange-400" />
-            </div>
-            {stats.aktifSiparis > 0 && (
-              <span className="w-3 h-3 bg-orange-500 rounded-full animate-pulse" />
-            )}
-          </div>
-          <p className="text-4xl font-black text-white">{stats.aktifSiparis}</p>
-          <p className="text-zinc-400 text-sm mt-2">Aktif Sipariş</p>
-          {stats.bekleyenSiparis > 0 && (
-            <p className="text-xs text-yellow-400 mt-2 font-semibold">⚡ {stats.bekleyenSiparis} hazır bekliyor</p>
-          )}
-        </div>
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          <span className="hidden sm:inline">Yenile</span>
+        </button>
+      </div>
 
-        {/* Günlük Ciro */}
-        <div 
-          onClick={() => router.push('/kasa')}
-          className="glass-card-hover p-6 cursor-pointer group"
-        >
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-              <DollarSign className="w-6 h-6 text-green-400" />
-            </div>
-            <Flame className="w-5 h-5 text-red-400 opacity-60" />
-          </div>
-          <p className="text-3xl font-black text-white">
-            {stats.bugunCiro.toLocaleString('tr-TR')}₺
-          </p>
-          <p className="text-zinc-400 text-sm mt-2">Bugünkü Ciro</p>
-        </div>
-
-        {/* Masa Doluluk */}
-        <div 
-          onClick={() => router.push('/masalar')}
-          className="glass-card-hover p-6 cursor-pointer group"
-        >
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition">
-              <ChefHat className="w-6 h-6 text-blue-400" />
-            </div>
-            <Target className="w-5 h-5 text-blue-400 opacity-60" />
-          </div>
-          <p className="text-4xl font-black text-white">
-            {stats.doluMasa}/{stats.toplamMasa}
-          </p>
-          <p className="text-zinc-400 text-sm mt-2">Dolu/Toplam Masa</p>
-          {stats.toplamMasa > 0 && (
-            <div className="mt-3 bg-white/5 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${(stats.doluMasa / stats.toplamMasa) * 100}%` }}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Kritik Stok */}
-        <div 
-          onClick={() => router.push('/stok')}
-          className={`glass-card-hover p-6 cursor-pointer group ${
-            stats.kritikStok > 0 ? 'border-red-500/50 bg-red-500/5' : ''
-          }`}
-        >
-          <div className="flex items-start justify-between mb-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition ${
-              stats.kritikStok > 0 ? 'bg-red-500/20' : 'bg-zinc-500/20'
-            }`}>
-              <Warehouse className={`w-6 h-6 ${stats.kritikStok > 0 ? 'text-red-400' : 'text-zinc-400'}`} />
-            </div>
-            {stats.kritikStok > 0 && (
-              <AlertTriangle className="w-5 h-5 text-red-400 animate-pulse" />
-            )}
-          </div>
-          <p className={`text-4xl font-black ${stats.kritikStok > 0 ? 'text-red-400' : 'text-white'}`}>
-            {stats.kritikStok}
-          </p>
-          <p className="text-zinc-400 text-sm mt-2">Kritik Stok</p>
-          {stats.kritikStok > 0 && (
-            <p className="text-xs text-red-400 mt-2 font-semibold">⚠️ Dikkat gerekiyor!</p>
-          )}
-        </div>
-      </motion.div>
-
-      {/* İkinci Satır İstatistikler */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Rezervasyon */}
-        <div 
-          onClick={() => router.push('/rezervasyon')}
-          className="glass-card-hover p-6 cursor-pointer group"
-        >
-          <div className="w-12 h-12 bg-teal-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
-            <CalendarDays className="w-6 h-6 text-teal-400" />
-          </div>
-          <p className="text-4xl font-black text-white">{stats.bugunRezervasyonlar}</p>
-          <p className="text-zinc-400 text-sm mt-2">Bugün Rezervasyon</p>
-        </div>
-
-        {/* Müşteri */}
-        <div 
-          onClick={() => router.push('/musteriler')}
-          className="glass-card-hover p-6 cursor-pointer group"
-        >
-          <div className="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
-            <Users className="w-6 h-6 text-indigo-400" />
-          </div>
-          <p className="text-4xl font-black text-white">{stats.toplamMusteri}</p>
-          <p className="text-zinc-400 text-sm mt-2">Toplam Müşteri</p>
-        </div>
-
-        {/* Raporlar */}
-        <div 
-          onClick={() => router.push('/rapor')}
-          className="glass-card-hover p-6 cursor-pointer group"
-        >
-          <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
-            <BarChart3 className="w-6 h-6 text-purple-400" />
-          </div>
-          <p className="text-2xl font-black text-white">Analiz</p>
-          <p className="text-zinc-400 text-sm mt-2">Satış raporları</p>
-        </div>
-
-        {/* AI Analiz */}
-        <div 
-          onClick={() => router.push('/ai-analiz')}
-          className="glass-card-hover p-6 cursor-pointer group"
-        >
-          <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
-            <Brain className="w-6 h-6 text-emerald-400" />
-          </div>
-          <p className="text-2xl font-black text-white">AI</p>
-          <p className="text-zinc-400 text-sm mt-2">Yapay zeka önerileri</p>
-        </div>
-      </motion.div>
-
-      {/* Son Siparişler & Hızlı Erişim */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="grid lg:grid-cols-3 gap-6">
-        {/* Son Siparişler */}
-        <div className="lg:col-span-1">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-black text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-yellow-400" />
-              Son Siparişler
-            </h2>
-            <Button
-              size="sm"
-              onClick={() => router.push('/siparisler')}
-              className="btn-premium-secondary text-xs"
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statKartlari.map((kart, i) => {
+          const Icon = kart.icon
+          return (
+            <div
+              key={i}
+              onClick={() => router.push(kart.path)}
+              className="p-5 rounded-2xl cursor-pointer transition-all group relative overflow-hidden"
+              style={{background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)'}}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = kart.renk + '40'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)' }}
             >
-              Tümünü Gör
-            </Button>
-          </div>
-          <div className="space-y-3">
-            {sonSiparisler.length === 0 ? (
-              <div className="glass-card p-6 text-center">
-                <ShoppingCart className="w-8 h-8 mx-auto mb-2 text-zinc-600" />
-                <p className="text-zinc-500 text-sm">Henüz sipariş yok</p>
-              </div>
-            ) : (
-              sonSiparisler.map((siparis, idx) => (
-                <div key={siparis.id} className="glass-card p-4 hover:bg-white/10 transition slide-in-left" style={{ animationDelay: `${idx * 50}ms` }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-bold text-sm text-white">
-                        {(siparis.masalar as any)?.ad || 'Paket Sipariş'}
-                      </p>
-                      <p className="text-xs text-zinc-400 mt-1">
-                        {new Date(siparis.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-yellow-400 text-sm">{siparis.toplam_tutar}₺</p>
-                      <span className={`text-xs px-2 py-1 rounded-lg inline-block mt-1 ${
-                        siparis.durum === 'hazirlaniyor' ? 'badge-warning' :
-                        siparis.durum === 'hazir' ? 'badge-info' :
-                        siparis.durum === 'tamamlandi' ? 'badge-success' :
-                        'bg-zinc-700/50 text-zinc-300'
-                      }`}>
-                        {siparis.durum === 'hazirlaniyor' ? '⏳ Hazırlanıyor' :
-                         siparis.durum === 'hazir' ? '✓ Hazır' :
-                         siparis.durum === 'tamamlandi' ? '✓ Tamamlandı' : siparis.durum}
-                      </span>
-                    </div>
-                  </div>
+              <div className="flex items-start justify-between mb-4">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110" style={{background: kart.bg}}>
+                  <Icon className="w-5 h-5" style={{color: kart.renk}} />
                 </div>
-              ))
-            )}
-          </div>
-        </div>
+                {kart.pulse && (
+                  <div className="w-2.5 h-2.5 rounded-full animate-pulse" style={{backgroundColor: kart.renk}} />
+                )}
+              </div>
+              <p className="text-3xl font-black text-white mb-1">{kart.deger}</p>
+              <p className="text-sm" style={{color: 'rgba(255,255,255,0.4)'}}>{kart.baslik}</p>
+              {kart.extra && (
+                <p className="text-xs mt-2 font-semibold" style={{color: kart.extraRenk}}>
+                  {kart.extra}
+                </p>
+              )}
+            </div>
+          )
+        })}
+      </div>
 
-        {/* Hızlı Erişim */}
+      {/* Quick Access + Recent Orders */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Quick Access */}
         <div className="lg:col-span-2">
-          <h2 className="text-xl font-black text-white mb-4 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-yellow-400" />
-            Hızlı Erişim
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {hizliErisim.map((item, idx) => {
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-white">Hızlı Erişim</h2>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+            {hizliErisim.map((item, i) => {
               const Icon = item.icon
               return (
                 <button
-                  key={item.path}
+                  key={i}
                   onClick={() => router.push(item.path)}
-                  className="glass-card p-4 hover:bg-white/15 transition group text-left slide-in-left"
-                  style={{ animationDelay: `${idx * 30}ms` }}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all group"
+                  style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)'}}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = item.bg; (e.currentTarget as HTMLElement).style.borderColor = item.renk + '30' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)' }}
                 >
-                  <div className={`w-10 h-10 ${item.renk} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition shadow-lg shadow-${item.renk.split('-')[1]}-500/30`}>
-                    <Icon className="w-5 h-5 text-white" />
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110" style={{background: item.bg}}>
+                    <Icon className="w-4 h-4" style={{color: item.renk}} />
                   </div>
-                  <p className="font-bold text-sm text-white">{item.ad}</p>
-                  <p className="text-xs text-zinc-400 mt-0.5">{item.aciklama}</p>
+                  <span className="text-xs font-medium text-center leading-tight" style={{color: 'rgba(255,255,255,0.6)'}}>{item.ad}</span>
                 </button>
               )
             })}
           </div>
         </div>
-      </motion.div>
+
+        {/* Recent Orders */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-white">Son Siparişler</h2>
+            <button onClick={() => router.push('/siparisler')} className="text-xs font-semibold flex items-center gap-1" style={{color: '#f59e0b'}}>
+              Tümü <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {sonSiparisler.length === 0 ? (
+              <div className="text-center py-8 rounded-xl" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                <ShoppingCart className="w-8 h-8 mx-auto mb-2" style={{color: 'rgba(255,255,255,0.2)'}} />
+                <p className="text-sm" style={{color: 'rgba(255,255,255,0.3)'}}>Henüz sipariş yok</p>
+              </div>
+            ) : (
+              sonSiparisler.map((siparis: any, i) => {
+                const renk = getSiparisRenk(siparis.durum)
+                return (
+                  <div key={i} className="flex items-center justify-between p-3 rounded-xl" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)'}}>
+                    <div>
+                      <p className="text-sm font-semibold text-white">{siparis.masalar?.ad || 'Masa'}</p>
+                      <p className="text-xs mt-0.5" style={{color: 'rgba(255,255,255,0.4)'}}>
+                        {new Date(siparis.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-white">{siparis.toplam_tutar?.toLocaleString('tr-TR')}₺</p>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{background: renk.bg, color: renk.color}}>
+                        {renk.label}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Alerts */}
+      {(stats.kritikStok > 0 || stats.bugunRezervasyonlar > 0) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {stats.kritikStok > 0 && (
+            <div className="flex items-center gap-3 p-4 rounded-xl" style={{background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)'}}>
+              <AlertTriangle className="w-5 h-5 flex-shrink-0" style={{color: '#ef4444'}} />
+              <div className="flex-1">
+                <p className="text-sm font-semibold" style={{color: '#ef4444'}}>{stats.kritikStok} ürün kritik stok seviyesinde</p>
+                <p className="text-xs mt-0.5" style={{color: 'rgba(239,68,68,0.7)'}}>Hemen kontrol edin</p>
+              </div>
+              <button onClick={() => router.push('/stok')} className="text-xs font-bold px-3 py-1.5 rounded-lg" style={{background: 'rgba(239,68,68,0.2)', color: '#ef4444'}}>
+                Görüntüle
+              </button>
+            </div>
+          )}
+          {stats.bugunRezervasyonlar > 0 && (
+            <div className="flex items-center gap-3 p-4 rounded-xl" style={{background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)'}}>
+              <CalendarDays className="w-5 h-5 flex-shrink-0" style={{color: '#3b82f6'}} />
+              <div className="flex-1">
+                <p className="text-sm font-semibold" style={{color: '#3b82f6'}}>{stats.bugunRezervasyonlar} rezervasyon bugün bekliyor</p>
+                <p className="text-xs mt-0.5" style={{color: 'rgba(59,130,246,0.7)'}}>Onay bekliyor</p>
+              </div>
+              <button onClick={() => router.push('/rezervasyon')} className="text-xs font-bold px-3 py-1.5 rounded-lg" style={{background: 'rgba(59,130,246,0.2)', color: '#3b82f6'}}>
+                Görüntüle
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
