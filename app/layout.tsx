@@ -1,4 +1,3 @@
-// app/layout.tsx - Root layout + Premium Sidebar
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -10,14 +9,8 @@ import {
   Crown, Building2, Shield, FileText, Zap
 } from 'lucide-react'
 import PwaInstall from '@/components/PwaInstall'
-import StokUyari from '@/components/StokUyari'
-import { OnboardingTour } from '@/components/OnboardingTour'
-import { PremiumUX } from '@/components/PremiumUX'
-import ThemeProvider from '@/components/ThemeProvider'
-import { Toaster } from '@/components/ui/sonner'
-import { useMobileMenu } from '@/hooks/useMobileMenu'
+import { Toaster } from 'sonner'
 import './globals.css'
-import './globals-mobile.css'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -28,13 +21,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     garson: true,
     isletme: true,
     yonetim: false,
-    musteri: false,
-    analiz: false,
-    guvenlik: false,
     ayarlar: true
   })
-
-  useMobileMenu(mobilMenuAcik)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
@@ -49,9 +37,52 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   async function cikisYap() {
     await supabase.auth.signOut()
-    router.push('/')
-    setMobilMenuAcik(false)
+    router.push('/login')
   }
+
+  const toggleGrup = (grup: string) => {
+    setMenuGrupAcik(prev => ({ ...prev, [grup]: !prev[grup] }))
+  }
+
+  const NavItem = ({ href, icon: Icon, label, badge }: any) => {
+    const active = pathname === href
+    return (
+      <button
+        onClick={() => {
+          router.push(href)
+          setMobilMenuAcik(false)
+        }}
+        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 group ${
+          active 
+            ? 'bg-primary/10 text-primary border border-primary/20 shadow-lg shadow-primary/5' 
+            : 'text-white/50 hover:bg-white/5 hover:text-white'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <Icon className={`w-[18px] h-[18px] transition-colors ${active ? 'text-primary' : 'group-hover:text-white'}`} />
+          <span className="text-sm font-medium tracking-tight">{label}</span>
+        </div>
+        {badge && (
+          <span className="bg-primary/20 text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-primary/20 uppercase tracking-tighter">
+            {badge}
+          </span>
+        )}
+      </button>
+    )
+  }
+
+  const NavGroup = ({ label, id, children }: any) => (
+    <div className="space-y-1">
+      <button 
+        onClick={() => toggleGrup(id)}
+        className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/30 uppercase tracking-widest hover:text-white/50 transition-colors"
+      >
+        {label}
+        {menuGrupAcik[id] ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+      </button>
+      {menuGrupAcik[id] && <div className="space-y-1 animate-fadeIn">{children}</div>}
+    </div>
+  )
 
   if (isPublic) {
     return (
@@ -59,266 +90,147 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <head>
           <link rel="manifest" href="/manifest.json" />
           <meta name="theme-color" content="#f59e0b" />
-          <meta name="apple-mobile-web-app-capable" content="yes" />
-          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-          <meta name="apple-mobile-web-app-title" content="Restoran Pro" />
-          <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
           <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-          <meta name="description" content="Türkiye'nin en kapsamlı restoran yönetim sistemi. QR menü, garson paneli, mutfak ekranı, kasa, stok takibi ve AI analiz." />
-          <title>Restoran Pro - Dijital Restoran Yönetim Sistemi</title>
         </head>
-        <body>
+        <body className="bg-background text-foreground selection:bg-primary/30 antialiased">
           <PwaInstall />
-          <Toaster richColors position="top-right" />
+          <Toaster richColors position="bottom-center" />
           {children}
         </body>
       </html>
     )
   }
 
-  const menuGruplari = [
-    {
-      id: 'garson',
-      baslik: 'Garson & Mutfak',
-      icon: ChefHat,
-      items: [
-        { ad: 'Garson Paneli', path: '/garson', icon: UtensilsCrossed },
-        { ad: 'Mutfak Ekranı (KDS)', path: '/garson/mutfak', icon: ChefHat },
-      ]
-    },
-    {
-      id: 'isletme',
-      baslik: 'İşletme',
-      icon: LayoutDashboard,
-      items: [
-        { ad: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-        { ad: 'Masalar', path: '/masalar', icon: ChefHat },
-        { ad: 'Masa Haritası', path: '/masa-harita', icon: MapPin },
-        { ad: 'Siparişler', path: '/siparisler', icon: ShoppingCart },
-        { ad: 'WhatsApp Siparişler', path: '/whatsapp-siparisler', icon: MessageCircle },
-        { ad: 'AI Sesli Sipariş', path: '/ai-sesli-siparis', icon: Mic },
-        { ad: 'Tek Panel', path: '/tek-panel', icon: Layers },
-        { ad: 'Kasa', path: '/kasa', icon: DollarSign },
-        { ad: 'Gelen Aramalar', path: '/aramalar', icon: Phone },
-      ]
-    },
-    {
-      id: 'yonetim',
-      baslik: 'Yönetim',
-      icon: Package,
-      items: [
-        { ad: 'Ürünler', path: '/urunler', icon: Package },
-        { ad: 'Kategoriler', path: '/kategoriler', icon: Layers },
-        { ad: 'Stok Takibi', path: '/stok', icon: Warehouse },
-        { ad: 'Otomatik Tedarik', path: '/otomatik-tedarik', icon: Zap },
-        { ad: 'Gider Takibi', path: '/giderler', icon: TrendingDown },
-        { ad: 'E-Faturalar', path: '/faturalar', icon: FileText },
-        { ad: 'İndirimler', path: '/indirimler', icon: Tag },
-        { ad: 'QR Kodlar', path: '/qr-kodlar', icon: QrCode },
-      ]
-    },
-    {
-      id: 'musteri',
-      baslik: 'Müşteri',
-      icon: Users,
-      items: [
-        { ad: 'Müşteriler', path: '/musteriler', icon: Users },
-        { ad: 'Sadakat & Oyun', path: '/sadakat-oyun', icon: Sparkles },
-        { ad: 'Rezervasyon', path: '/rezervasyon', icon: CalendarDays },
-        { ad: 'Garsonlar', path: '/garsonlar', icon: UtensilsCrossed },
-        { ad: 'Şubeler', path: '/subeler', icon: Building2 },
-      ]
-    },
-    {
-      id: 'analiz',
-      baslik: 'Analiz & Raporlar',
-      icon: BarChart3,
-      items: [
-        { ad: 'Patron Merkezi', path: '/patron-merkezi', icon: Crown },
-        { ad: 'AI Müşteri Analitikleri', path: '/ai-musteri-analitikleri', icon: Brain },
-        { ad: 'Raporlar', path: '/rapor', icon: BarChart3 },
-        { ad: 'Garson Performans', path: '/garson-performans', icon: Award },
-        { ad: 'AI Stok Tahmin', path: '/stok-tahmin', icon: Brain },
-        { ad: 'Finansal Dashboard', path: '/finansal-dashboard', icon: DollarSign },
-        { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain },
-      ]
-    },
-    {
-      id: 'guvenlik',
-      baslik: 'Güvenlik',
-      icon: Shield,
-      items: [
-        { ad: 'Audit Logs', path: '/audit-logs', icon: Shield },
-      ]
-    },
-    {
-      id: 'ayarlar',
-      baslik: 'Ayarlar',
-      icon: Settings,
-      items: [
-        { ad: 'Ayarlar', path: '/ayarlar', icon: Settings },
-        { ad: 'Paket & Fiyatlar', path: '/ayarlar/paket', icon: Crown },
-      ]
-    }
-  ]
-
-  const toggleGrup = (id: string) => {
-    setMenuGrupAcik(prev => ({ ...prev, [id]: !prev[id] }))
-  }
-
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-3 py-4 mb-2">
-        <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
-          <ChefHat className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-base font-black text-white leading-none">Restoran Pro</h1>
-          <p className="text-[10px] text-amber-400/70 font-medium mt-0.5">Yönetim Paneli</p>
-        </div>
-      </div>
-
-      <div className="h-px bg-white/5 mx-3 mb-3" />
-
-      <nav className="flex-1 overflow-y-auto px-2 space-y-0.5 pb-4">
-        {menuGruplari.map(grup => {
-          const GrupIcon = grup.icon
-          const grupAktif = grup.items.some(item => pathname === item.path)
-          return (
-            <div key={grup.id} className="mb-1">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  toggleGrup(grup.id)
-                }}
-                className={`w-full flex items-center justify-between px-2.5 py-2 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition-all outline-none ${
-                  grupAktif
-                    ? 'text-amber-400 bg-amber-500/10'
-                    : 'text-white/30 hover:text-white/60 hover:bg-white/5'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <GrupIcon className="w-3.5 h-3.5" />
-                  <span>{grup.baslik}</span>
-                </div>
-                {menuGrupAcik[grup.id]
-                  ? <ChevronDown className="w-3 h-3" />
-                  : <ChevronRight className="w-3 h-3" />
-                }
-              </button>
-              {menuGrupAcik[grup.id] && (
-                <div className="mt-0.5 space-y-0.5 ml-1">
-                  {grup.items.map(item => {
-                    const Icon = item.icon
-                    const aktif = pathname === item.path
-                    return (
-                      <button
-                        key={item.path}
-                        type="button"
-                        onClick={() => { router.push(item.path); setMobilMenuAcik(false) }}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all outline-none ${
-                          aktif
-                            ? 'bg-amber-500 text-black font-bold shadow-md shadow-amber-500/20'
-                            : 'text-white/50 hover:text-white hover:bg-white/8'
-                        }`}
-                      >
-                        <Icon className={`w-4 h-4 flex-shrink-0 ${aktif ? 'text-black' : ''}`} />
-                        <span className="truncate">{item.ad}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </nav>
-
-      <div className="border-t border-white/8 pt-3 px-2 pb-2 mt-auto">
-        <button
-          type="button"
-          onClick={cikisYap}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-red-400/80 hover:text-red-300 hover:bg-red-500/10 transition-all outline-none"
-        >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
-          <span>Çıkış Yap</span>
-        </button>
-      </div>
-    </div>
-  )
-
   return (
     <html lang="tr" className="dark">
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#f59e0b" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Restoran Pro" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-        <title>Restoran Pro</title>
-        <script dangerouslySetInnerHTML={{ __html: `
-          if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-              navigator.serviceWorker.register('/sw.js').catch(function() {});
-            });
-          }
-        ` }} />
       </head>
-      <body style={{backgroundColor: 'hsl(224,71%,4%)', color: 'white'}}>
+      <body className="bg-background text-foreground selection:bg-primary/30 antialiased overflow-hidden">
         <PwaInstall />
-        <ThemeProvider />
-        <Toaster richColors position="top-right" />
-
-        <div className="lg:hidden fixed top-0 left-0 right-0 z-50 border-b px-4 h-14 flex items-center justify-between" style={{backgroundColor: 'hsl(220,14%,5%)', borderColor: 'rgba(255,255,255,0.08)'}}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)'}}>
-              <ChefHat className="w-4 h-4 text-white" />
+        <Toaster richColors position="bottom-center" />
+        
+        <div className="flex h-screen overflow-hidden">
+          {/* Desktop Sidebar */}
+          <aside className="hidden lg:flex w-72 flex-col bg-card border-r border-white/5 relative z-40">
+            {/* Sidebar Header */}
+            <div className="p-6">
+              <div className="flex items-center gap-3 px-2">
+                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-3">
+                  <UtensilsCrossed className="w-6 h-6 text-black" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-black tracking-tighter text-white">RESTORAN <span className="text-primary">PRO</span></h1>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Premium Plan</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <span className="font-black text-amber-400 text-base">Restoran Pro</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setMobilMenuAcik(!mobilMenuAcik)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg transition-all"
-            style={{color: 'rgba(255,255,255,0.6)'}}
-          >
-            {mobilMenuAcik ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
 
-        {mobilMenuAcik && (
-          <div
-            className="lg:hidden fixed inset-0 z-40"
-            style={{backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)'}}
-            onClick={() => setMobilMenuAcik(false)}
-          />
-        )}
+            {/* Sidebar Navigation */}
+            <nav className="flex-1 overflow-y-auto px-4 space-y-6 custom-scrollbar pb-6">
+              <div className="space-y-1">
+                <NavItem href="/dashboard" icon={LayoutDashboard} label="Panel" />
+              </div>
 
-        <aside
-          className={`lg:hidden fixed top-0 left-0 h-full w-72 z-50 border-r transform transition-transform duration-300 ease-in-out ${mobilMenuAcik ? 'translate-x-0' : '-translate-x-full'}`}
-          style={{backgroundColor: 'hsl(220,14%,5%)', borderColor: 'rgba(255,255,255,0.08)'}}
-        >
-          <SidebarContent />
-        </aside>
+              <NavGroup label="Garson Paneli" id="garson">
+                <NavItem href="/masalar" icon={Layers} label="Masalar" />
+                <NavItem href="/siparisler" icon={ShoppingCart} label="Siparişler" />
+                <NavItem href="/mutfak-ekrani" icon={ChefHat} label="Mutfak" />
+                <NavItem href="/kasa" icon={DollarSign} label="Kasa" />
+              </NavGroup>
 
-        <div className="flex min-h-screen">
-          <aside
-            className="w-60 hidden lg:block fixed top-0 left-0 h-full overflow-hidden border-r"
-            style={{backgroundColor: 'hsl(220,14%,5%)', borderColor: 'rgba(255,255,255,0.08)'}}
-          >
-            <SidebarContent />
+              <NavGroup label="İşletme" id="isletme">
+                <NavItem href="/urunler" icon={Package} label="Ürün Yönetimi" />
+                <NavItem href="/kategoriler" icon={Tag} label="Kategoriler" />
+                <NavItem href="/stok" icon={Warehouse} label="Stok Takibi" badge="AI" />
+                <NavItem href="/musteriler" icon={Users} label="Müşteriler" />
+              </NavGroup>
+
+              <NavGroup label="Yönetim" id="yonetim">
+                <NavItem href="/rapor" icon={BarChart3} label="Raporlar" />
+                <NavItem href="/subeler" icon={Building2} label="Şubeler" />
+                <NavItem href="/personel" icon={Shield} label="Personel" />
+              </NavGroup>
+
+              <NavGroup label="Ayarlar" id="ayarlar">
+                <NavItem href="/qr-kodlar" icon={QrCode} label="QR Kodlar" />
+                <NavItem href="/ayarlar" icon={Settings} label="Genel Ayarlar" />
+              </NavGroup>
+            </nav>
+
+            {/* Sidebar Footer */}
+            <div className="p-4 mt-auto border-t border-white/5">
+              <button 
+                onClick={cikisYap}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/40 hover:bg-red-500/10 hover:text-red-500 transition-all duration-200"
+              >
+                <LogOut size={18} />
+                <span className="text-sm font-bold">Oturumu Kapat</span>
+              </button>
+            </div>
           </aside>
 
-          <main className="flex-1 pt-14 lg:pt-0 lg:ml-60 min-h-screen overflow-auto" style={{backgroundColor: 'hsl(224,71%,4%)'}}>
-            {user && <StokUyari />}
-            {user && <OnboardingTour />}
-            {user && <PremiumUX />}
+          {/* Mobile Header */}
+          <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-white/5 px-4 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
+                <UtensilsCrossed className="w-5 h-5 text-black" />
+              </div>
+              <h1 className="text-base font-black tracking-tighter text-white uppercase">Restoran <span className="text-primary">Pro</span></h1>
+            </div>
+            <button 
+              onClick={() => setMobilMenuAcik(!mobilMenuAcik)}
+              className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white"
+            >
+              {mobilMenuAcik ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
+
+          {/* Main Content */}
+          <main className="flex-1 relative overflow-y-auto pt-16 lg:pt-0 bg-background custom-scrollbar">
             {children}
           </main>
         </div>
+
+        {/* Mobile Menu Overlay */}
+        {mobilMenuAcik && (
+          <div className="lg:hidden fixed inset-0 z-[60] bg-background animate-fadeIn overflow-y-auto pb-10">
+            <div className="p-6 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                    <UtensilsCrossed className="w-6 h-6 text-black" />
+                  </div>
+                  <h1 className="text-xl font-black tracking-tighter text-white">RESTORAN <span className="text-primary">PRO</span></h1>
+                </div>
+                <button onClick={() => setMobilMenuAcik(false)} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <nav className="space-y-6">
+                <NavItem href="/dashboard" icon={LayoutDashboard} label="Panel" />
+                <NavGroup label="Garson Paneli" id="garson">
+                  <NavItem href="/masalar" icon={Layers} label="Masalar" />
+                  <NavItem href="/siparisler" icon={ShoppingCart} label="Siparişler" />
+                  <NavItem href="/mutfak-ekrani" icon={ChefHat} label="Mutfak" />
+                  <NavItem href="/kasa" icon={DollarSign} label="Kasa" />
+                </NavGroup>
+                <NavGroup label="Ayarlar" id="ayarlar">
+                  <NavItem href="/ayarlar" icon={Settings} label="Ayarlar" />
+                  <button onClick={cikisYap} className="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 font-bold">
+                    <LogOut size={18} /> Oturumu Kapat
+                  </button>
+                </NavGroup>
+              </nav>
+            </div>
+          </div>
+        )}
       </body>
     </html>
   )

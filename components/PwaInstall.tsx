@@ -1,124 +1,75 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Download, X, Smartphone } from 'lucide-react'
+import { Download, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function PwaInstall() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
-  const [showBanner, setShowBanner] = useState(false)
-  const [isIos, setIsIos] = useState(false)
-  const [isInstalled, setIsInstalled] = useState(false)
+  const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
-    // Zaten yüklü mü?
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true)
-      return
-    }
-
-    // iOS kontrolü
-    const ua = navigator.userAgent
-    const ios = /iphone|ipad|ipod/i.test(ua)
-    const safari = /safari/i.test(ua) && !/chrome/i.test(ua)
-
-    if (ios && safari) {
-      setIsIos(true)
-      const dismissed = localStorage.getItem('pwa-ios-dismissed')
-      if (!dismissed) {
-        setShowBanner(true)
-        setTimeout(() => setIsVisible(true), 100)
-      }
-      return
-    }
-
-    // Android/Chrome için beforeinstallprompt
-    const handler = (e: Event) => {
+    const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault()
-      setDeferredPrompt(e)
-      const dismissed = localStorage.getItem('pwa-dismissed')
-      if (!dismissed) {
-        setShowBanner(true)
-        setTimeout(() => setIsVisible(true), 100)
-      }
+      setInstallPrompt(e)
+      
+      // 3 saniye sonra göster
+      setTimeout(() => {
+        setIsVisible(true)
+      }, 3000)
     }
 
-    window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    }
   }, [])
 
-  const yukle = async () => {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
+  const handleInstall = async () => {
+    if (!installPrompt) return
+    
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    
     if (outcome === 'accepted') {
+      setInstallPrompt(null)
       setIsVisible(false)
-      setTimeout(() => setShowBanner(false), 300)
-      setIsInstalled(true)
     }
-    setDeferredPrompt(null)
   }
-
-  const kapat = () => {
-    setIsVisible(false)
-    setTimeout(() => setShowBanner(false), 300)
-    localStorage.setItem(isIos ? 'pwa-ios-dismissed' : 'pwa-dismissed', '1')
-  }
-
-  if (!showBanner || isInstalled) return null
 
   return (
     <AnimatePresence>
       {isVisible && (
         <motion.div
-          initial={{ y: 120, opacity: 0 }}
+          initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 120, opacity: 0 }}
-          transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-          className="fixed bottom-4 left-4 right-4 z-50 max-w-sm mx-auto"
+          exit={{ y: 100, opacity: 0 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-md"
         >
-          <div className="bg-gradient-to-r from-cyan-500/10 to-purple-500/10 border border-cyan-500/50 backdrop-blur-xl rounded-2xl p-4 shadow-2xl shadow-cyan-500/20">
-            <div className="flex items-start gap-3">
-              <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0"
-              >
-                <Smartphone className="w-6 h-6 text-white" />
-              </motion.div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-white text-sm">Restoran Pro'yu Yükle</p>
-                {isIos ? (
-                  <p className="text-xs text-cyan-300/70 mt-0.5">
-                    Safari'de <strong className="text-white">Paylaş</strong> butonuna bas, ardından <strong className="text-white">"Ana Ekrana Ekle"</strong> seç
-                  </p>
-                ) : (
-                  <p className="text-xs text-cyan-300/70 mt-0.5">
-                    Hızlı erişim için ana ekrana ekle — offline çalışır!
-                  </p>
-                )}
+          <div className="bg-zinc-900 border border-white/10 p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-4 backdrop-blur-xl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+                <Download className="w-5 h-5 text-black" />
               </div>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={kapat}
-                className="text-cyan-400 hover:text-cyan-300 flex-shrink-0 transition"
-              >
-                <X className="w-5 h-5" />
-              </motion.button>
+              <div>
+                <h3 className="text-sm font-bold text-white">Uygulamayı İndir</h3>
+                <p className="text-xs text-white/50">Daha hızlı ve kolay erişim için ana ekrana ekle.</p>
+              </div>
             </div>
-
-            {!isIos && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={yukle}
-                className="mt-3 w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-400 hover:to-purple-400 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm transition-all shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50"
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleInstall}
+                className="bg-primary text-black text-xs font-bold px-4 py-2 rounded-lg hover:scale-105 transition-all"
               >
-                <Download className="w-4 h-4" />
-                Uygulamayı Yükle
-              </motion.button>
-            )}
+                İndir
+              </button>
+              <button
+                onClick={() => setIsVisible(false)}
+                className="p-2 text-white/30 hover:text-white transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </motion.div>
       )}

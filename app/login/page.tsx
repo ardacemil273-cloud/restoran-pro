@@ -2,218 +2,123 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { UtensilsCrossed, ArrowRight, ShieldCheck, Zap, BarChart3, Star } from 'lucide-react'
 import { toast } from 'sonner'
-import { ChefHat, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
-  const [sifre, setSifre] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [goster, setGoster] = useState(false)
   const router = useRouter()
 
-  const handleLogin = async () => {
-    if (!email || !sifre) {
-      toast.error('E-posta ve şifre gereklidir')
-      return
-    }
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password: sifre })
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
-      if (error.message.includes('Invalid login credentials')) {
-        toast.error('E-posta veya şifre hatalı')
-      } else if (error.message.includes('Email not confirmed')) {
-        toast.error('E-posta adresinizi doğrulamanız gerekiyor')
-      } else {
-        toast.error('Giriş hatası: ' + error.message)
-      }
+      toast.error('Giriş başarısız: ' + error.message)
       setLoading(false)
-      return
+    } else {
+      toast.success('Giriş başarılı! Yönlendiriliyorsunuz...')
+      router.push('/dashboard')
     }
-    toast.success('Giriş başarılı! Yönlendiriliyorsunuz...')
-    router.push('/masalar')
-    setLoading(false)
   }
 
   return (
-    <div className="min-h-screen flex" style={{backgroundColor: 'hsl(224,71%,4%)'}}>
-      {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12" style={{background: 'linear-gradient(135deg, hsl(220,14%,6%) 0%, hsl(224,71%,8%) 100%)'}}>
-        {/* Background decoration */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full opacity-10" style={{background: 'radial-gradient(circle, #f59e0b, transparent)'}} />
-          <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full opacity-10" style={{background: 'radial-gradient(circle, #f97316, transparent)'}} />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-5" style={{background: 'radial-gradient(circle, #f59e0b, transparent)'}} />
-        </div>
-
-        {/* Logo */}
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-xl" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)'}}>
-            <ChefHat className="w-6 h-6 text-white" />
+    <div className="min-h-screen flex bg-background selection:bg-primary/30">
+      {/* Sol Panel - Branding & Info */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12 bg-card border-r border-white/5">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.05),transparent)] pointer-events-none" />
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-12">
+            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/20 rotate-3">
+              <UtensilsCrossed className="w-7 h-7 text-black" />
+            </div>
+            <h1 className="text-2xl font-black tracking-tighter text-white uppercase">Restoran <span className="text-primary">Pro</span></h1>
           </div>
-          <div>
-            <h1 className="text-xl font-black text-white">Restoran Pro</h1>
-            <p className="text-xs font-medium" style={{color: 'rgba(245,158,11,0.7)'}}>Yönetim Sistemi</p>
-          </div>
-        </div>
-
-        {/* Center Content */}
-        <div className="relative z-10 space-y-8">
-          <div>
-            <h2 className="text-4xl font-black text-white leading-tight mb-4">
-              Restoranınızı<br />
-              <span style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
-                Dijitalleştirin
-              </span>
+          
+          <div className="space-y-8">
+            <h2 className="text-5xl font-black text-white leading-[1.1] tracking-tight">
+              Restoranınızı <br />
+              <span className="text-primary">Dijitalleştirin.</span>
             </h2>
-            <p className="text-lg" style={{color: 'rgba(255,255,255,0.5)'}}>
-              QR menü, garson paneli, kasa, stok takibi ve yapay zeka analizi tek platformda.
+            <p className="text-xl text-white/50 max-w-md leading-relaxed">
+              QR menü, garson paneli, kasa, stok takibi ve yapay zeka analizli tek platformda restoranınızı yönetin.
             </p>
           </div>
-
-          <div className="space-y-4">
-            {[
-              { icon: '🍽️', text: 'Masa & Sipariş Yönetimi' },
-              { icon: '📊', text: 'Gerçek Zamanlı Raporlar' },
-              { icon: '🤖', text: 'AI Destekli Analiz' },
-              { icon: '📱', text: 'Mobil Uyumlu Garson Paneli' },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-sm font-medium" style={{color: 'rgba(255,255,255,0.7)'}}>{item.text}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
-        {/* Bottom stats */}
-        <div className="relative z-10 grid grid-cols-3 gap-4">
-          {[
-            { value: '500+', label: 'Aktif Restoran' },
-            { value: '99.9%', label: 'Uptime' },
-            { value: '7/24', label: 'Destek' },
-          ].map((stat, i) => (
-            <div key={i} className="text-center p-3 rounded-xl" style={{background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)'}}>
-              <p className="text-xl font-black" style={{color: '#f59e0b'}}>{stat.value}</p>
-              <p className="text-xs mt-0.5" style={{color: 'rgba(255,255,255,0.4)'}}>{stat.label}</p>
+        <div className="relative z-10 grid grid-cols-2 gap-6">
+          <div className="p-6 rounded-3xl bg-white/5 border border-white/5 backdrop-blur-sm">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+              <Zap className="w-5 h-5 text-primary" />
             </div>
-          ))}
+            <h3 className="text-white font-bold mb-1">Hızlı Sipariş</h3>
+            <p className="text-xs text-white/40">Saniyeler içinde sipariş al ve mutfağa ilet.</p>
+          </div>
+          <div className="p-6 rounded-3xl bg-white/5 border border-white/5 backdrop-blur-sm">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+              <BarChart3 className="w-5 h-5 text-primary" />
+            </div>
+            <h3 className="text-white font-bold mb-1">AI Analiz</h3>
+            <p className="text-xs text-white/40">Satış verilerini yapay zeka ile analiz et.</p>
+          </div>
         </div>
       </div>
 
-      {/* Right Panel - Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md">
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)'}}>
-              <ChefHat className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-black text-white">Restoran Pro</h1>
+      {/* Sağ Panel - Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center lg:text-left space-y-2">
+            <h3 className="text-3xl font-black text-white tracking-tight">Hoş Geldiniz</h3>
+            <p className="text-white/50 font-medium">Hesabınıza giriş yapın</p>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-3xl font-black text-white mb-2">Hoş Geldiniz</h2>
-            <p style={{color: 'rgba(255,255,255,0.4)'}}>Hesabınıza giriş yapın</p>
-          </div>
-
-          <div className="space-y-5">
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-semibold mb-2" style={{color: 'rgba(255,255,255,0.7)'}}>
-                E-posta Adresi
-              </label>
-              <input
-                type="email"
-                placeholder="ornek@restoran.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                className="w-full px-4 py-3 rounded-xl text-white placeholder-white/30 outline-none transition-all text-sm"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.06)',
-                  border: '1.5px solid rgba(255,255,255,0.1)',
-                }}
-                onFocus={e => { e.target.style.borderColor = '#f59e0b'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)' }}
-                onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none' }}
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-semibold" style={{color: 'rgba(255,255,255,0.7)'}}>
-                  Şifre
-                </label>
-                <Link href="/sifremi-unuttum" className="text-xs font-medium hover:underline" style={{color: '#f59e0b'}}>
-                  Şifremi Unuttum
-                </Link>
-              </div>
-              <div className="relative">
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">E-posta Adresi</label>
                 <input
-                  type={goster ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  value={sifre}
-                  onChange={e => setSifre(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                  className="w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-white/30 outline-none transition-all text-sm"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.06)',
-                    border: '1.5px solid rgba(255,255,255,0.1)',
-                  }}
-                  onFocus={e => { e.target.style.borderColor = '#f59e0b'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)' }}
-                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none' }}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="ornek@restoran.com"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  required
                 />
-                <button
-                  type="button"
-                  onClick={() => setGoster(!goster)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-                  style={{color: 'rgba(255,255,255,0.3)'}}
-                >
-                  {goster ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Şifre</label>
+                  <Link href="/sifremi-unuttum" className="text-xs font-bold text-primary hover:text-primary/80 transition-colors">Şifremi Unuttum</Link>
+                </div>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  required
+                />
               </div>
             </div>
 
-            {/* Login Button */}
             <button
-              type="button"
-              onClick={handleLogin}
+              type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-black text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{
-                background: loading ? 'rgba(245,158,11,0.7)' : 'linear-gradient(135deg, #f59e0b, #f97316)',
-                boxShadow: loading ? 'none' : '0 4px 16px rgba(245,158,11,0.3)',
-              }}
+              className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-black font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Giriş yapılıyor...</span>
-                </>
-              ) : (
-                <>
-                  <span>Giriş Yap</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
+              {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+              {!loading && <ArrowRight size={20} />}
             </button>
-          </div>
+          </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm" style={{color: 'rgba(255,255,255,0.4)'}}>
-              Hesabınız yok mu?{' '}
-              <Link href="/register" className="font-bold hover:underline" style={{color: '#f59e0b'}}>
-                Ücretsiz Kayıt Olun
-              </Link>
+          <div className="text-center">
+            <p className="text-white/40 font-medium">
+              Hesabınız yok mu? <Link href="/register" className="text-primary font-bold hover:underline">Ücretsiz Kayıt Olun</Link>
             </p>
-          </div>
-
-          <div className="mt-4 text-center">
-            <Link href="/" className="text-xs hover:underline" style={{color: 'rgba(255,255,255,0.25)'}}>
-              Ana Sayfaya Dön
-            </Link>
           </div>
         </div>
       </div>
