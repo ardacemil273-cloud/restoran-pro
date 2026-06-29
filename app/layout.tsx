@@ -14,7 +14,9 @@ import StokUyari from '@/components/StokUyari'
 import { OnboardingTour } from '@/components/OnboardingTour'
 import { PremiumUX } from '@/components/PremiumUX'
 import { Toaster } from '@/components/ui/sonner'
+import { useMobileMenu } from '@/hooks/useMobileMenu'
 import './globals.css'
+import './globals-mobile.css'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -27,6 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     analiz: true,
     sistem: true
   })
+
+  // Mobil menü scroll hatası düzeltmesi
+  useMobileMenu(mobilMenuAcik)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
