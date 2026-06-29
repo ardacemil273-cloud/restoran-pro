@@ -1,28 +1,21 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { NotificationProvider } from '@/components/NotificationProvider'
+import { Toaster } from 'sonner'
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [restoranId, setRestoranId] = useState('')
-
-  useEffect(() => {
-    const getRestoran = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const { data } = await supabase
-        .from('restoranlar')
-        .select('id')
-        .eq('kullanici_id', user.id)
-        .single()
-      if (data) setRestoranId(data.id)
-    }
-    getRestoran()
-  }, [])
-
+export default function GarsonLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <NotificationProvider restoranId={restoranId} />
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: '#27272a',
+            color: '#fff',
+            border: '1px solid #3f3f46'
+          }
+        }}
+      />
       {children}
     </>
   )

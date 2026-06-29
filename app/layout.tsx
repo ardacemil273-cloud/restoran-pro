@@ -3,8 +3,9 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
-import { Hop as Home, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users, TrendingDown, Brain, Warehouse } from 'lucide-react'
+import { Hop as Home, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users, TrendingDown, Brain, Warehouse, CalendarDays, Tag, UtensilsCrossed, ChefHat } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import PwaInstall from '@/components/PwaInstall'
 import './globals.css'
 
 
@@ -40,14 +41,38 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     { ad: 'Stok Takibi', path: '/stok', icon: Warehouse },
     { ad: 'Gider Takibi', path: '/giderler', icon: TrendingDown },
     { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain },
+    { ad: 'Rezervasyon', path: '/rezervasyon', icon: CalendarDays },
+    { ad: 'İndirimler', path: '/indirimler', icon: Tag },
+    { ad: 'Garsonlar', path: '/garsonlar', icon: UtensilsCrossed },
     { ad: 'Rapor', path: '/rapor', icon: BarChart3 },
     { ad: 'QR Kodlar', path: '/qr-kodlar', icon: QrCode },
     { ad: 'Ayarlar', path: '/ayarlar', icon: Settings },
   ]
 
   return (
-    <html>
+    <html lang="tr">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#eab308" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Restoran Pro" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                console.log('SW registered:', reg.scope);
+              }).catch(function(err) {
+                console.log('SW registration failed:', err);
+              });
+            });
+          }
+        ` }} />
+      </head>
       <body className="bg-zinc-900">
+        <PwaInstall />
         <div className="flex min-h-screen">
           <aside className="w-64 bg-zinc-950 border-r border-zinc-800 p-4 hidden lg:block">
             <h1 className="text-2xl font-bold text-yellow-500 mb-8">QR Menü</h1>
