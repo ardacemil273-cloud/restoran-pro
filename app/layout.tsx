@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users,
   TrendingDown, Brain, Warehouse, CalendarDays, Tag, UtensilsCrossed, ChefHat, Menu, X,
-  DollarSign, ChevronDown, ChevronRight, Layers, MapPin
+  DollarSign, ChevronDown, ChevronRight, Layers, MapPin, Award
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PwaInstall from '@/components/PwaInstall'
@@ -107,6 +107,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       baslik: 'Analiz',
       items: [
         { ad: 'Raporlar', path: '/rapor', icon: BarChart3 },
+        { ad: 'Garson Performans', path: '/garson-performans', icon: Award },
         { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain },
       ]
     },
