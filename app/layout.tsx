@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users,
   TrendingDown, Brain, Warehouse, CalendarDays, Tag, UtensilsCrossed, ChefHat, Menu, X,
-  DollarSign, ChevronDown, ChevronRight, Layers, MapPin, Award, MessageCircle, Mic, Sparkles, Crown, Building2, Shield
+  DollarSign, ChevronDown, ChevronRight, Layers, MapPin, Award, MessageCircle, Mic, Sparkles, Crown, Building2, Shield, FileText
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PwaInstall from '@/components/PwaInstall'
@@ -95,6 +95,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         { ad: 'Stok Takibi', path: '/stok', icon: Warehouse },
         { ad: 'Otomatik Tedarik', path: '/otomatik-tedarik', icon: Package },
         { ad: 'Gider Takibi', path: '/giderler', icon: TrendingDown },
+        { ad: 'E-Faturalar', path: '/faturalar', icon: FileText },
         { ad: 'İndirimler', path: '/indirimler', icon: Tag },
         { ad: 'QR Kodlar', path: '/qr-kodlar', icon: QrCode },
       ]
