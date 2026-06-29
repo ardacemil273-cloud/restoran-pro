@@ -225,10 +225,7 @@ export default function AiAnalizPage() {
                   <YAxis stroke="#71717a" tick={{ fontSize: 11 }} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#18181b', border: '1px solid #3f3f46' }}
-                    formatter={(value: any, name: string) => [
-                      name === 'siparis' ? `${value} sipariş` : `${Number(value).toFixed(0)}₺`,
-                      name === 'siparis' ? 'Sipariş' : 'Ciro'
-                    ]}
+                    formatter={(value: any) => [`${Number(value).toFixed(0)}`, 'Değer']}
                   />
                   <Bar dataKey="siparis" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>
