@@ -8,7 +8,10 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Upload, Save, Copy, Settings, Package, ExternalLink, Palette, Globe, Image as ImageIcon, Crown, ChevronRight } from 'lucide-react'
+import {
+  Upload, Save, Copy, Settings, ExternalLink, Palette, Globe,
+  Image as ImageIcon, Crown, ChevronRight, Phone, MapPin, Info
+} from 'lucide-react'
 import Image from 'next/image'
 
 export default function AyarlarPage() {
@@ -18,6 +21,8 @@ export default function AyarlarPage() {
   const [aciklama, setAciklama] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [temaRenk, setTemaRenk] = useState('#f59e0b')
+  const [telefon, setTelefon] = useState('')
+  const [adres, setAdres] = useState('')
   const [uploading, setUploading] = useState(false)
   const [kaydediyor, setKaydediyor] = useState(false)
   const router = useRouter()
@@ -52,6 +57,8 @@ export default function AyarlarPage() {
       setAciklama(data.aciklama || '')
       setLogoUrl(data.logo_url || '')
       setTemaRenk(data.tema_renk?.replace(/'/g, '') || '#f59e0b')
+      setTelefon(data.telefon || '')
+      setAdres(data.adres || '')
     }
   }
 
@@ -106,7 +113,9 @@ export default function AyarlarPage() {
       slug: slug.trim(),
       aciklama: aciklama.trim(),
       logo_url: logoUrl || null,
-      tema_renk: temaRenk
+      tema_renk: temaRenk,
+      telefon: telefon.replace(/[\s\-\(\)]/g, '') || null,
+      adres: adres.trim() || null
     }
 
     const res = await fetch('/api/ayarlar/guncelle', {
@@ -258,6 +267,53 @@ export default function AyarlarPage() {
                 placeholder="Restoran hakkında kısa bilgi"
                 className="bg-zinc-700 border-zinc-600 focus:border-yellow-500"
                 rows={3}
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* İletişim Bilgileri */}
+        <Card className="p-6 bg-zinc-800 border-zinc-700 mb-6">
+          <h2 className="font-bold mb-1 flex items-center gap-2 text-zinc-200">
+            <Phone className="w-4 h-4 text-zinc-400" />
+            İletişim Bilgileri
+          </h2>
+          <p className="text-xs text-zinc-500 mb-4 flex items-center gap-1">
+            <Info className="w-3 h-3" />
+            Telefon numarası, otomatik arama tanıma (webhook) için kullanılır
+          </p>
+          <div className="space-y-4">
+            {/* Telefon */}
+            <div>
+              <Label htmlFor="telefon" className="text-zinc-300 text-sm mb-1.5 block">
+                Restoran Telefonu
+              </Label>
+              <Input
+                id="telefon"
+                type="tel"
+                value={telefon}
+                onChange={(e) => setTelefon(e.target.value)}
+                placeholder="05XX XXX XX XX"
+                className="bg-zinc-700 border-zinc-600 focus:border-yellow-500"
+              />
+              <p className="text-xs text-zinc-500 mt-1">
+                VoIP/telefon sisteminizin bu numaraya gelen aramaları otomatik kaydeder
+              </p>
+            </div>
+
+            {/* Adres */}
+            <div>
+              <Label htmlFor="adres" className="text-zinc-300 text-sm mb-1.5 block">
+                <MapPin className="w-3 h-3 inline mr-1" />
+                Restoran Adresi
+              </Label>
+              <Textarea
+                id="adres"
+                value={adres}
+                onChange={(e) => setAdres(e.target.value)}
+                placeholder="Mahalle, Cadde, No, İlçe, İl"
+                className="bg-zinc-700 border-zinc-600 focus:border-yellow-500"
+                rows={2}
               />
             </div>
           </div>

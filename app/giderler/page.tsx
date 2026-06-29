@@ -100,7 +100,7 @@ export default function GiderlerPage() {
       .from('siparisler')
       .select('toplam_tutar')
       .eq('restoran_id', restoranData.id)
-      .eq('durum', 'odendi')
+      .in('durum', ['tamamlandi', 'odendi'])
       .gte('created_at', `${baslangic}T00:00:00`)
       .lte('created_at', `${bitis}T23:59:59`)
 

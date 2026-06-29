@@ -9,11 +9,10 @@ const supabaseAdmin = createClient(
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    console.log('API Gelen:', body)
 
-    const { id, ad, slug, aciklama, logo_url, tema_renk } = body
+    const { id, ad, slug, aciklama, logo_url, tema_renk, telefon, adres } = body
 
-    if (!id ||!ad ||!slug) {
+    if (!id || !ad || !slug) {
       return NextResponse.json({
         error: 'ID, ad ve slug zorunlu',
         gelen: { id, ad, slug }
@@ -21,15 +20,17 @@ export async function POST(request: Request) {
     }
 
     const { error } = await supabaseAdmin
-     .from('restoranlar')
-     .update({
+      .from('restoranlar')
+      .update({
         ad,
         slug,
         aciklama: aciklama || null,
         logo_url: logo_url || null,
-        tema_renk: tema_renk || '#f59e0b'
+        tema_renk: tema_renk || '#f59e0b',
+        telefon: telefon || null,
+        adres: adres || null
       })
-     .eq('id', id)
+      .eq('id', id)
 
     if (error) {
       console.log('Supabase Error:', error)

@@ -52,7 +52,7 @@ export default function GecmisPage() {
         )
       `)
       .eq('restoran_id', restoran.id)
-      .eq('durum', 'tamamlandi')
+      .in('durum', ['tamamlandi', 'odendi'])
       .gte('tamamlanma_tarihi', baslangic.toISOString())
       .order('tamamlanma_tarihi', { ascending: false })
 

@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       .from('siparisler')
       .select('created_at, toplam_tutar, masa_ad')
       .eq('restoran_id', restoran.id)
-      .eq('durum', 'odendi')
+      .in('durum', ['tamamlandi', 'odendi'])
       .gte('created_at', otuzGunOnce.toISOString())
 
     // En çok satan ürünler
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         siparisler!inner (restoran_id, durum, created_at)
       `)
       .eq('siparisler.restoran_id', restoran.id)
-      .eq('siparisler.durum', 'odendi')
+      .in('siparisler.durum', ['tamamlandi', 'odendi'])
       .gte('siparisler.created_at', otuzGunOnce.toISOString())
 
     if (!siparisler || !urunSatislari) {

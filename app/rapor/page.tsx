@@ -59,7 +59,7 @@ export default function RaporPage() {
      .from('siparisler')
      .select('toplam_tutar, created_at')
      .eq('restoran_id', restoranId)
-     .eq('durum', 'odendi')
+     .in('durum', ['tamamlandi', 'odendi'])
      .gte('created_at', yediGunOnce.toISOString())
 
     if (!data) return
@@ -92,7 +92,7 @@ export default function RaporPage() {
         siparisler!inner (restoran_id, durum, created_at)
       `)
      .eq('siparisler.restoran_id', restoranId)
-     .eq('siparisler.durum', 'odendi')
+     .in('siparisler.durum', ['tamamlandi', 'odendi'])
      .gte('siparisler.created_at', otuzGunOnce.toISOString())
 
     if (!data) return

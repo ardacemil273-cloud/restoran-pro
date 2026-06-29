@@ -1,27 +1,87 @@
-# 📞 Telefon Arama Entegrasyonu - Restoran Pro
+# 📞 Telefon Entegrasyonu Kurulum Rehberi
 
-## Genel Bakış
-
-Restoran Pro'ya telefon arama entegrasyonu eklendi! Artık müşteriler sizi aradığında, sistem otomatik olarak:
-
-- ✅ Arayan numarayı kaydeder
-- ✅ Mevcut müşteri veritabanında arar
-- ✅ Yeni müşteri oluşturur (gerekirse)
-- ✅ Arama geçmişini tutar
-- ✅ Aramalar sayfasında gösterir
+Restoran Pro, VoIP/telefon sistemlerinizden gelen aramaları otomatik olarak kaydedebilir. Bu sayede müşteri numarasını sisteme girmeden, aramanız geldiğinde müşteri bilgileri otomatik ekrana gelir.
 
 ---
 
-## Teknik Altyapı
+## 🔧 Nasıl Çalışır?
 
-### API Endpoint
+1. **Müşteri sizi arar** → VoIP sisteminiz (Twilio, Asterisk, FreePBX vb.) webhook gönderir
+2. **Sistem otomatik kaydeder** → `arama_kayitlari` tablosuna düşer
+3. **Müşteri tanınır** → Kayıtlı müşteri ise profili gösterilir, değilse otomatik oluşturulur
+4. **Aramalar sayfasında görünür** → "Otomatik Kayıtlar" sekmesinde listelenir
+
+---
+
+## 🗄️ Veritabanı Kurulumu
+
+Supabase SQL editöründe aşağıdaki migration'ı çalıştırın (veya `supabase/migrations/20260629200000_create_arama_kayitlari_table.sql` dosyasını uygulayın):
+
+```sql
+CREATE TABLE IF NOT EXISTS arama_kayitlari (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  restoran_id UUID NOT NULL REFERENCES restoranlar(id) ON DELETE CASCADE,
+  musteri_id BIGINT REFERENCES musteriler(id) ON DELETE SET NULL,
+  arayan_numara VARCHAR(20) NOT NULL,
+  alici_numara VARCHAR(20),
+  arama_tarihi TIMESTAMPTZ DEFAULT NOW(),
+  sure INTEGER DEFAULT 0,
+  durum VARCHAR(50) DEFAULT 'completed',
+  kaynak_sistem VARCHAR(50) DEFAULT 'webhook',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index'ler
+CREATE INDEX IF NOT EXISTS idx_arama_kayitlari_restoran ON arama_kayitlari(restoran_id, arama_tarihi DESC);
+CREATE INDEX IF NOT EXISTS idx_arama_kayitlari_numara ON arama_kayitlari(restoran_id, arayan_numara);
+
+-- RLS
+ALTER TABLE arama_kayitlari ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Restoran sahibi görebilir" ON arama_kayitlari FOR SELECT
+  USING (restoran_id IN (SELECT id FROM restoranlar WHERE sahibi_id = auth.uid()));
+
+CREATE POLICY "Service role ekleyebilir" ON arama_kayitlari FOR INSERT WITH CHECK (true);
+```
+
+---
+
+## ⚙️ Restoran Telefon Numarası Ayarı
+
+Webhook'un hangi restorana ait olduğunu otomatik belirleyebilmesi için:
+
+1. **Ayarlar** sayfasına gidin (`/ayarlar`)
+2. **İletişim Bilgileri** bölümünde **Restoran Telefonu** alanını doldurun
+3. Kaydedin
+
+Bu numara, gelen webhook'taki `to` alanıyla eşleştirilir ve restoran otomatik tanınır.
+
+> **Alternatif:** Webhook isteğine `restoran_id` alanı ekleyerek de restoran belirtebilirsiniz.
+
+---
+
+## 🔐 Güvenlik (WEBHOOK_SECRET)
+
+Webhook endpoint'ini güvence altına almak için:
+
+1. Vercel/sunucu ortam değişkenlerine `WEBHOOK_SECRET=güçlü-bir-şifre` ekleyin
+2. Telefon sisteminizin webhook isteğine `Authorization: Bearer güçlü-bir-şifre` header'ı ekleyin
+
+> `WEBHOOK_SECRET` tanımlı değilse, endpoint herkese açık çalışır (geliştirme için uygundur).
+
+---
+
+## 📡 API Endpoint
+
+### Webhook Gönderme
 
 ```
 POST /api/phone-webhook
+Authorization: Bearer <WEBHOOK_SECRET>  (opsiyonel)
+Content-Type: application/json
 ```
 
-### Request Format
-
+**Request Body:**
 ```json
 {
   "from": "+905551234567",
@@ -29,107 +89,74 @@ POST /api/phone-webhook
   "timestamp": "2024-01-15T10:30:00Z",
   "duration": 120,
   "status": "completed",
-  "restoran_id": "uuid-optional",
+  "restoran_id": "uuid-opsiyonel",
   "system": "twilio"
 }
 ```
 
-### Response
+**Durum Değerleri:**
+| Değer | Açıklama |
+|-------|----------|
+| `completed` | Tamamlanan arama |
+| `missed` | Cevapsız arama |
+| `failed` | Başarısız arama |
 
+**Başarılı Yanıt (201):**
 ```json
 {
   "success": true,
   "message": "Arama başarıyla kaydedildi",
   "data": {
-    "restoran_id": "uuid",
-    "musteri_id": "uuid-or-null",
+    "restoran_id": "...",
+    "musteri_id": 123,
     "arayan_numara": "5551234567",
     "durum": "completed"
   }
 }
 ```
 
+### Test Endpoint
+
+```
+GET /api/phone-webhook?test=true
+```
+
 ---
 
-## Kurulum Adımları
+## 📱 Twilio Kurulumu
 
-### 1. Veritabanı Tablosu Oluşturma
+1. [Twilio Console](https://console.twilio.com) → Phone Numbers → Numaranızı seçin
+2. **Voice & Fax** → **A Call Comes In** → **Webhook**
+3. URL: `https://your-domain.vercel.app/api/phone-webhook`
+4. Method: `HTTP POST`
 
-Supabase SQL Editor'de çalıştırın:
-
-```sql
-CREATE TABLE arama_kayitlari (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  restoran_id UUID NOT NULL REFERENCES restoranlar(id) ON DELETE CASCADE,
-  musteri_id BIGINT REFERENCES musteriler(id) ON DELETE SET NULL,
-  arayan_numara VARCHAR(20) NOT NULL,
-  alici_numara VARCHAR(20) NOT NULL,
-  arama_tarihi TIMESTAMP NOT NULL DEFAULT NOW(),
-  sure INTEGER DEFAULT 0,
-  durum VARCHAR(50) DEFAULT 'completed',
-  kaynak_sistem VARCHAR(50) DEFAULT 'webhook',
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
--- İndeksler
-CREATE INDEX idx_arama_kayitlari_restoran ON arama_kayitlari(restoran_id);
-CREATE INDEX idx_arama_kayitlari_musteri ON arama_kayitlari(musteri_id);
-CREATE INDEX idx_arama_kayitlari_numara ON arama_kayitlari(arayan_numara);
-CREATE INDEX idx_arama_kayitlari_tarih ON arama_kayitlari(arama_tarihi);
-```
-
-### 2. Twilio Entegrasyonu (Örnek)
-
-**Twilio Webhook URL:**
-```
-https://your-domain.com/api/phone-webhook
-```
-
-**Twilio Studio Flow Setup:**
-
-1. Twilio Console → Phone Numbers → Active Numbers
-2. Incoming Calls → Webhook URL'i ayarla
-3. HTTP POST seçin
-4. URL: `https://your-domain.com/api/phone-webhook`
-
-**Twilio Request Mapping:**
-
-Twilio'dan gelen verileri dönüştürmek için webhook öncesi bir Function kullanın:
+**Twilio Webhook Format:**
+Twilio form-encoded gönderir. Bir dönüştürücü middleware gerekebilir:
 
 ```javascript
-exports.handler = async function(context, event, callback) {
-  const client = context.getTwilioClient();
-  
-  const payload = {
-    from: event.From,
-    to: event.To,
-    timestamp: new Date().toISOString(),
-    duration: event.CallDuration || 0,
-    status: event.CallStatus || 'completed',
-    system: 'twilio'
-  };
-
-  // Restoran Pro webhook'a gönder
-  const fetch = require('node-fetch');
-  const response = await fetch('https://your-domain.com/api/phone-webhook', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  callback(null, response.json());
-};
+// Twilio için örnek dönüştürücü
+const body = {
+  from: req.body.From,
+  to: req.body.To,
+  status: req.body.CallStatus === 'completed' ? 'completed' : 'missed',
+  duration: parseInt(req.body.CallDuration || '0'),
+  system: 'twilio'
+}
 ```
 
-### 3. Asterisk/FreePBX Entegrasyonu
+---
 
-**FreePBX Webhook Ayarı:**
+## 📞 Asterisk / FreePBX Kurulumu
 
-1. Admin → Connectivity → Webhooks
-2. Yeni webhook oluştur
-3. URL: `https://your-domain.com/api/phone-webhook`
-4. Method: POST
-5. Trigger: Call Ended
+`/etc/asterisk/extensions.conf` dosyasına ekleyin:
+
+```ini
+[macro-webhook-notify]
+exten => s,1,System(curl -s -X POST https://your-domain.vercel.app/api/phone-webhook \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${WEBHOOK_SECRET}" \
+  -d '{"from":"${ARG1}","to":"${ARG2}","status":"completed","duration":${ARG3},"system":"asterisk"}')
+```
 
 **FreePBX Script Örneği:**
 
@@ -142,8 +169,9 @@ TO=$2
 DURATION=$3
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-curl -X POST https://your-domain.com/api/phone-webhook \
+curl -X POST https://your-domain.vercel.app/api/phone-webhook \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_WEBHOOK_SECRET" \
   -d "{
     \"from\": \"$FROM\",
     \"to\": \"$TO\",
@@ -154,52 +182,22 @@ curl -X POST https://your-domain.com/api/phone-webhook \
   }"
 ```
 
-### 4. Özel VoIP Sistemi Entegrasyonu
+---
 
-Herhangi bir VoIP sisteminizden webhook gönderebilirsiniz:
+## 🔍 Test Etme
 
 ```bash
-curl -X POST https://your-domain.com/api/phone-webhook \
+# Endpoint durumu kontrolü
+curl https://your-domain.vercel.app/api/phone-webhook?test=true
+
+# Test arama kaydı gönderme
+curl -X POST https://your-domain.vercel.app/api/phone-webhook \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_WEBHOOK_SECRET" \
   -d '{
     "from": "+905551234567",
     "to": "+905559876543",
     "timestamp": "2024-01-15T10:30:00Z",
-    "duration": 120,
-    "status": "completed",
-    "system": "custom-voip"
-  }'
-```
-
----
-
-## Webhook Test Etme
-
-### Test Endpoint
-
-```
-GET /api/phone-webhook?test=true
-```
-
-**Response:**
-```json
-{
-  "status": "Webhook aktif ve çalışıyor ✓",
-  "endpoint": "/api/phone-webhook",
-  "method": "POST",
-  "description": "Telefon arama webhook sistemi"
-}
-```
-
-### cURL ile Test
-
-```bash
-curl -X POST http://localhost:3000/api/phone-webhook \
-  -H "Content-Type: application/json" \
-  -d '{
-    "from": "+905551234567",
-    "to": "+905559876543",
-    "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
     "duration": 120,
     "status": "completed",
     "system": "test"
@@ -208,89 +206,37 @@ curl -X POST http://localhost:3000/api/phone-webhook \
 
 ---
 
-## Arayüz Entegrasyonu
+## 🖥️ Arayüz Kullanımı
 
-### Aramalar Sayfası
+### Manuel Arama Sekmesi
+- Telefon numarasını girin → Müşteri otomatik aranır
+- Kayıtlı müşteri bulunursa profil gösterilir
+- Kayıtlı değilse "Müşteri Kaydet" veya "Yine de Sipariş Al" seçenekleri çıkar
 
-Sistem otomatik olarak arama kaydını `Aramalar` sayfasında gösterir:
-
-- 📱 Arayan numarası
-- ⏱️ Arama saati
-- ⏳ Arama süresi
-- 👤 Müşteri bilgisi (varsa)
-- 🔗 Doğrudan sipariş oluşturma
-
-### Müşteri Profili
-
-Her müşterinin arama geçmişi görülebilir:
-
-- Tüm aramaları listesi
-- Toplam arama sayısı
-- Son arama tarihi
-- Arama süresi istatistikleri
+### Otomatik Kayıtlar Sekmesi
+- Webhook üzerinden gelen tüm aramalar listelenir
+- Her kayıtta: arayan numara, müşteri adı (varsa), arama süresi, durum
+- "Sipariş Al" butonu ile direkt paket sipariş sayfasına geçiş
 
 ---
 
-## Güvenlik
+## 🔧 Sorun Giderme
 
-### API Güvenliği
-
-1. **HTTPS Zorunlu** - Tüm webhook çağrıları HTTPS üzerinden olmalı
-2. **Rate Limiting** - Çok fazla istek göndermeyin (max 100/dakika)
-3. **Validation** - Tüm parametreler doğrulanır
-4. **Error Handling** - Hatalı istekler 400/500 döner
-
-### Veri Gizliliği
-
-- Numaralar normalize edilir (sadece rakamlar)
-- Kişisel veriler Supabase'de şifreli tutulur
-- GDPR uyumlu veri saklama
+| Sorun | Çözüm |
+|-------|-------|
+| "Restoran bulunamadı" hatası | Ayarlar'dan restoran telefon numarasını kaydedin veya webhook'a `restoran_id` ekleyin |
+| "Yetkisiz erişim" hatası | `WEBHOOK_SECRET` env değişkenini kontrol edin |
+| Kayıtlar görünmüyor | `arama_kayitlari` tablosunun oluşturulduğunu kontrol edin |
+| Müşteri tanınmıyor | Telefon numarasının normalize edilmiş formatta (son 10 hane) eşleştiğini kontrol edin |
+| Müşteri otomatik oluşturulmadı | Webhook'ta `status: "completed"` ve `duration > 0` olduğundan emin olun |
 
 ---
 
-## Sorun Giderme
+## 🔒 Güvenlik Özeti
 
-### "Restoran bulunamadı" Hatası
-
-**Çözüm:** Restoran ID'sini webhook'a ekleyin:
-
-```json
-{
-  "from": "+905551234567",
-  "to": "+905559876543",
-  "restoran_id": "your-restoran-uuid",
-  "system": "twilio"
-}
-```
-
-### Müşteri Otomatik Oluşturulmadı
-
-**Sebep:** Arama `completed` durumunda değil veya süresi 0
-
-**Çözüm:** Webhook'ta `status: "completed"` ve `duration > 0` olduğundan emin olun
-
-### Webhook Çağrısı Başarısız
-
-**Debug:** Test endpoint'i kontrol edin:
-
-```bash
-curl https://your-domain.com/api/phone-webhook?test=true
-```
-
----
-
-## İleri Özellikler (Gelecek)
-
-- 🤖 AI destekli müşteri tanıma
-- 📊 Arama analitikleri
-- 🔔 Canlı arama bildirimleri
-- 📝 Otomatik arama notları
-- 🎯 Arama yönlendirmesi
-
----
-
-## Destek
-
-Sorularınız için: support@restoranpro.com
-
-Webhook testi: `GET /api/phone-webhook?test=true`
+- ✅ HTTPS zorunlu (Vercel otomatik sağlar)
+- ✅ `WEBHOOK_SECRET` ile isteğe bağlı kimlik doğrulama
+- ✅ Tüm parametreler doğrulanır
+- ✅ Telefon numaraları normalize edilir (sadece son 10 hane)
+- ✅ RLS ile veri izolasyonu (her restoran sadece kendi verilerini görür)
+- ✅ Service role key ile güvenli yazma

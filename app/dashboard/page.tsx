@@ -82,7 +82,7 @@ export default function DashboardPage() {
 
     const doluMasaSayisi = masalar.filter((m: any) => m.durum === 'dolu').length
     const aktifSiparisSayisi = siparisler.filter((s: any) => s.durum !== 'tamamlandi' && s.durum !== 'iptal').length
-    const bugunCiroToplam = siparisler.filter((s: any) => s.durum === 'tamamlandi').reduce((sum: number, s: any) => sum + (s.toplam_tutar || 0), 0)
+    const bugunCiroToplam = siparisler.filter((s: any) => s.durum === 'tamamlandi' || s.durum === 'odendi').reduce((sum: number, s: any) => sum + (s.toplam_tutar || 0), 0)
     const kritikStokSayisi = urunler.filter((u: any) => u.stok !== null && u.stok <= u.kritik_stok).length
     const bekleyenSiparisSayisi = siparisler.filter((s: any) => s.durum === 'hazir').length
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 
 /**
  * Telefon Arama Webhook Endpoint
@@ -28,8 +28,38 @@ import { supabase } from '@/lib/supabase'
  * }
  */
 
+// Webhook için service role client kullanıyoruz
+// Çünkü webhook dışarıdan geliyor, kullanıcı auth'u yok
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !serviceKey) {
+    throw new Error('Supabase URL veya key eksik')
+  }
+
+  return createClient(url, serviceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  })
+}
+
 export async function POST(request: NextRequest) {
   try {
+    // Basit güvenlik: Authorization header veya secret key kontrolü
+    const authHeader = request.headers.get('Authorization')
+    const webhookSecret = process.env.WEBHOOK_SECRET
+
+    // Eğer WEBHOOK_SECRET tanımlıysa, doğrulama yap
+    if (webhookSecret && authHeader !== `Bearer ${webhookSecret}`) {
+      return NextResponse.json(
+        { error: 'Yetkisiz erişim' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const { from, to, timestamp, duration, status, restoran_id, system } = body
 
@@ -41,7 +71,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Numaraları normalize et (sadece rakamlar)
+    const supabase = getSupabaseAdmin()
+
+    // Numaraları normalize et (sadece rakamlar, son 10 hane)
     const normalizePhone = (phone: string) => phone.replace(/\D/g, '').slice(-10)
     const fromNormalized = normalizePhone(from)
     const toNormalized = normalizePhone(to)
@@ -55,7 +87,7 @@ export async function POST(request: NextRequest) {
         .select('id')
         .or(`telefon.ilike.%${toNormalized}%,telefon.ilike.%${to}%`)
         .limit(1)
-        .single()
+        .maybeSingle()
 
       if (restoranData) {
         finalRestoranId = restoranData.id
@@ -64,31 +96,31 @@ export async function POST(request: NextRequest) {
 
     if (!finalRestoranId) {
       return NextResponse.json(
-        { error: 'Restoran bulunamadı. Lütfen restoran_id gönderin.' },
+        { error: 'Restoran bulunamadı. Lütfen restoran_id gönderin veya restoranınızın telefon numarasını ayarlardan kaydedin.' },
         { status: 404 }
       )
     }
 
-    // Müşteri bul veya oluştur
+    // Müşteri bul
     const { data: existingCustomer } = await supabase
       .from('musteriler')
       .select('id')
       .eq('restoran_id', finalRestoranId)
       .or(`telefon.eq.${fromNormalized},telefon.ilike.%${fromNormalized}%`)
       .limit(1)
-      .single()
+      .maybeSingle()
 
     let customerId = existingCustomer?.id
 
-    if (!customerId && status === 'completed' && duration > 0) {
-      // Yeni müşteri oluştur (sadece tamamlanan aramalar için)
+    // Tamamlanan aramalar için müşteri otomatik oluştur
+    if (!customerId && status === 'completed' && duration && duration > 0) {
       const { data: newCustomer } = await supabase
         .from('musteriler')
         .insert({
           restoran_id: finalRestoranId,
           telefon: fromNormalized,
           ad: `Müşteri ${fromNormalized}`,
-          notlar: `Otomatik sistem tarafından ${system || 'telefon'} üzerinden eklendi`
+          notlar: `Otomatik eklendi — ${system || 'telefon'} sistemi üzerinden`
         })
         .select('id')
         .single()
@@ -96,7 +128,7 @@ export async function POST(request: NextRequest) {
       customerId = newCustomer?.id
     }
 
-    // Arama kaydını oluştur (arama_kayitlari tablosu)
+    // Arama kaydını oluştur
     const { error: insertError } = await supabase
       .from('arama_kayitlari')
       .insert({
@@ -118,7 +150,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Başarılı yanıt
     return NextResponse.json({
       success: true,
       message: 'Arama başarıyla kaydedildi',
@@ -140,7 +171,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Test Endpoint - Webhook'u test etmek için
+ * Test Endpoint
  * GET /api/phone-webhook?test=true
  */
 export async function GET(request: NextRequest) {
@@ -153,6 +184,7 @@ export async function GET(request: NextRequest) {
       endpoint: '/api/phone-webhook',
       method: 'POST',
       description: 'Telefon arama webhook sistemi',
+      guvenlik: 'WEBHOOK_SECRET env değişkeni ile güvence altına alın',
       example: {
         from: '+905551234567',
         to: '+905559876543',

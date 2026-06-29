@@ -7,7 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Phone, PhoneCall, User, MapPin, Plus, Search, ShoppingCart, Clock, LayoutDashboard, Users } from 'lucide-react'
+import {
+  Phone, PhoneCall, PhoneMissed, User, MapPin, Plus, Search,
+  ShoppingCart, Clock, LayoutDashboard, Users, RefreshCw,
+  CheckCircle, XCircle, PhoneOff, Timer
+} from 'lucide-react'
 
 type Musteri = {
   id: number
@@ -19,6 +23,18 @@ type Musteri = {
 }
 
 type AramaKaydi = {
+  id: string
+  arayan_numara: string
+  alici_numara: string | null
+  arama_tarihi: string
+  sure: number
+  durum: string
+  kaynak_sistem: string
+  musteri_id: number | null
+  musteriler: Musteri | null
+}
+
+type ManuelArama = {
   telefon: string
   musteri: Musteri | null
   zaman: string
@@ -30,10 +46,13 @@ export default function AramalarPage() {
   const [aramaNo, setAramaNo] = useState('')
   const [bulunanMusteri, setBulunanMusteri] = useState<Musteri | null>(null)
   const [araniyor, setAraniyor] = useState(false)
-  const [aramaGecmisi, setAramaGecmisi] = useState<AramaKaydi[]>([])
+  const [manuelGecmis, setManuelGecmis] = useState<ManuelArama[]>([])
+  const [webhookKayitlari, setWebhookKayitlari] = useState<AramaKaydi[]>([])
+  const [webhookYukleniyor, setWebhookYukleniyor] = useState(false)
   const [yeniMusteriAd, setYeniMusteriAd] = useState('')
   const [yeniMusteriAdres, setYeniMusteriAdres] = useState('')
   const [kaydetModal, setKaydetModal] = useState(false)
+  const [aktifTab, setAktifTab] = useState<'manuel' | 'webhook'>('manuel')
   const router = useRouter()
 
   useEffect(() => {
@@ -57,6 +76,34 @@ export default function AramalarPage() {
 
     setRestoran(restoranData)
     setLoading(false)
+
+    // Webhook kayıtlarını yükle
+    await getWebhookKayitlari(restoranData.id)
+  }
+
+  const getWebhookKayitlari = async (restoranId: string) => {
+    setWebhookYukleniyor(true)
+    const { data, error } = await supabase
+      .from('arama_kayitlari')
+      .select(`
+        id,
+        arayan_numara,
+        alici_numara,
+        arama_tarihi,
+        sure,
+        durum,
+        kaynak_sistem,
+        musteri_id,
+        musteriler (id, telefon, ad, adres, notlar, created_at)
+      `)
+      .eq('restoran_id', restoranId)
+      .order('arama_tarihi', { ascending: false })
+      .limit(50)
+
+    if (!error && data) {
+      setWebhookKayitlari(data as any)
+    }
+    setWebhookYukleniyor(false)
   }
 
   const numaraAra = async () => {
@@ -65,7 +112,6 @@ export default function AramalarPage() {
     setAraniyor(true)
     setBulunanMusteri(null)
 
-    // Numarayı normalize et — boşlukları ve parantezleri temizle
     const normalizeTel = aramaNo.replace(/[\s\-\(\)]/g, '')
 
     const { data: musteri } = await supabase
@@ -82,14 +128,12 @@ export default function AramalarPage() {
       toast.info('Bu numara kayıtlı değil')
     }
 
-    // Arama geçmişine ekle
-    const kayit: AramaKaydi = {
+    const kayit: ManuelArama = {
       telefon: normalizeTel,
       musteri: musteri || null,
       zaman: new Date().toISOString()
     }
-    setAramaGecmisi(prev => [kayit, ...prev].slice(0, 20))
-
+    setManuelGecmis(prev => [kayit, ...prev].slice(0, 20))
     setAraniyor(false)
   }
 
@@ -128,18 +172,54 @@ export default function AramalarPage() {
     setYeniMusteriAdres('')
   }
 
-  const sipariseDonustur = () => {
-    if (!aramaNo.trim()) return
+  const sipariseDonustur = (telefon?: string, musteri?: Musteri | null) => {
+    const tel = telefon || aramaNo
+    if (!tel.trim()) return
 
-    const normalizeTel = aramaNo.replace(/[\s\-\(\)]/g, '')
+    const normalizeTel = tel.replace(/[\s\-\(\)]/g, '')
+    const m = musteri !== undefined ? musteri : bulunanMusteri
     const params = new URLSearchParams({
       telefon: normalizeTel,
-      ad: bulunanMusteri?.ad || '',
-      adres: bulunanMusteri?.adres || '',
-      musteri_id: bulunanMusteri?.id?.toString() || ''
+      ad: m?.ad || '',
+      adres: m?.adres || '',
+      musteri_id: m?.id?.toString() || ''
     })
 
     router.push(`/paket-siparis?${params.toString()}`)
+  }
+
+  const formatSure = (saniye: number) => {
+    if (!saniye || saniye === 0) return '-'
+    const dk = Math.floor(saniye / 60)
+    const sn = saniye % 60
+    return dk > 0 ? `${dk}dk ${sn}sn` : `${sn}sn`
+  }
+
+  const getDurumIcon = (durum: string) => {
+    switch (durum) {
+      case 'completed': return <CheckCircle className="w-4 h-4 text-green-400" />
+      case 'missed': return <PhoneMissed className="w-4 h-4 text-red-400" />
+      case 'failed': return <XCircle className="w-4 h-4 text-red-400" />
+      default: return <Phone className="w-4 h-4 text-zinc-400" />
+    }
+  }
+
+  const getDurumRenk = (durum: string) => {
+    switch (durum) {
+      case 'completed': return 'text-green-400'
+      case 'missed': return 'text-red-400'
+      case 'failed': return 'text-red-400'
+      default: return 'text-zinc-400'
+    }
+  }
+
+  const getDurumMetin = (durum: string) => {
+    switch (durum) {
+      case 'completed': return 'Tamamlandı'
+      case 'missed': return 'Cevapsız'
+      case 'failed': return 'Başarısız'
+      default: return durum
+    }
   }
 
   if (loading) {
@@ -148,13 +228,14 @@ export default function AramalarPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white p-6">
+      {/* Başlık */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-black flex items-center gap-2">
             <PhoneCall className="w-7 h-7 text-green-500" />
             Gelen Aramalar
           </h1>
-          <p className="text-sm text-zinc-400 mt-1">Telefon açıldığında numarayı gir, sistem otomatik tanır</p>
+          <p className="text-sm text-zinc-400 mt-1">Telefon numarasını gir veya webhook kayıtlarını görüntüle</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => router.push('/dashboard')} className="bg-zinc-700 hover:bg-zinc-600" size="sm">
@@ -172,147 +253,302 @@ export default function AramalarPage() {
         </div>
       </div>
 
-      {/* Arama Girişi */}
-      <Card className="p-6 bg-zinc-800 border-zinc-700 mb-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center animate-pulse">
-            <PhoneCall className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold">Numara Gir</h2>
-            <p className="text-sm text-zinc-400">Arayan kişinin telefon numarasını yaz</p>
-          </div>
-        </div>
+      {/* Tab Seçici */}
+      <div className="flex gap-2 mb-6 border-b border-zinc-700">
+        <button
+          onClick={() => setAktifTab('manuel')}
+          className={`pb-3 px-4 text-sm font-bold transition-all ${
+            aktifTab === 'manuel'
+              ? 'text-green-400 border-b-2 border-green-400'
+              : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <Phone className="w-4 h-4 inline mr-2" />
+          Manuel Arama
+        </button>
+        <button
+          onClick={() => setAktifTab('webhook')}
+          className={`pb-3 px-4 text-sm font-bold transition-all ${
+            aktifTab === 'webhook'
+              ? 'text-blue-400 border-b-2 border-blue-400'
+              : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <PhoneOff className="w-4 h-4 inline mr-2" />
+          Otomatik Kayıtlar
+          {webhookKayitlari.length > 0 && (
+            <span className="ml-2 bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+              {webhookKayitlari.length}
+            </span>
+          )}
+        </button>
+      </div>
 
-        <div className="flex gap-3">
-          <Input
-            type="tel"
-            placeholder="05XX XXX XX XX"
-            value={aramaNo}
-            onChange={(e) => setAramaNo(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && numaraAra()}
-            className="bg-zinc-700 border-zinc-600 text-lg h-12"
-          />
-          <Button
-            onClick={numaraAra}
-            disabled={araniyor || !aramaNo.trim()}
-            className="bg-green-600 hover:bg-green-700 h-12 px-6"
-          >
-            {araniyor ? (
-              <Clock className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                <Search className="w-5 h-5 mr-2" />
-                Ara
-              </>
-            )}
-          </Button>
-        </div>
-      </Card>
-
-      {/* Sonuç */}
-      {bulunanMusteri && (
-        <Card className="p-6 bg-green-950/30 border-green-700 mb-6 animate-in fade-in slide-in-from-bottom-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-full bg-green-600 flex items-center justify-center">
-                <User className="w-7 h-7 text-white" />
+      {/* Manuel Arama Sekmesi */}
+      {aktifTab === 'manuel' && (
+        <div className="space-y-4">
+          {/* Numara Giriş Kartı */}
+          <Card className="p-6 bg-zinc-800 border-zinc-700">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center animate-pulse">
+                <PhoneCall className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-green-400">{bulunanMusteri.ad}</h3>
-                <p className="text-zinc-300 mt-1 flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  {bulunanMusteri.telefon}
-                </p>
-                {bulunanMusteri.adres && (
-                  <p className="text-zinc-300 mt-1 flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    {bulunanMusteri.adres}
-                  </p>
-                )}
-                {bulunanMusteri.notlar && (
-                  <p className="text-yellow-500 mt-2 text-sm">Not: {bulunanMusteri.notlar}</p>
-                )}
+                <h2 className="text-xl font-bold">Numara Gir</h2>
+                <p className="text-sm text-zinc-400">Arayan kişinin telefon numarasını yaz</p>
               </div>
             </div>
-            <Button
-              onClick={sipariseDonustur}
-              className="bg-yellow-500 text-black hover:bg-yellow-600 font-bold"
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Sipariş Al
-            </Button>
-          </div>
-        </Card>
+
+            <div className="flex gap-3">
+              <Input
+                type="tel"
+                placeholder="05XX XXX XX XX"
+                value={aramaNo}
+                onChange={(e) => setAramaNo(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && numaraAra()}
+                className="bg-zinc-700 border-zinc-600 text-lg h-12"
+              />
+              <Button
+                onClick={numaraAra}
+                disabled={araniyor || !aramaNo.trim()}
+                className="bg-green-600 hover:bg-green-700 h-12 px-6"
+              >
+                {araniyor ? (
+                  <Clock className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <Search className="w-5 h-5 mr-2" />
+                    Ara
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+
+          {/* Bulunan Müşteri */}
+          {bulunanMusteri && (
+            <Card className="p-6 bg-green-950/30 border-green-700 animate-in fade-in slide-in-from-bottom-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-full bg-green-600 flex items-center justify-center">
+                    <User className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-green-400">{bulunanMusteri.ad}</h3>
+                    <p className="text-zinc-300 mt-1 flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      {bulunanMusteri.telefon}
+                    </p>
+                    {bulunanMusteri.adres && (
+                      <p className="text-zinc-300 mt-1 flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        {bulunanMusteri.adres}
+                      </p>
+                    )}
+                    {bulunanMusteri.notlar && (
+                      <p className="text-yellow-500 mt-2 text-sm">Not: {bulunanMusteri.notlar}</p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  onClick={() => sipariseDonustur()}
+                  className="bg-yellow-500 text-black hover:bg-yellow-600 font-bold"
+                >
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Sipariş Al
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Kayıtlı değilse kaydet */}
+          {aramaNo && !bulunanMusteri && manuelGecmis.length > 0 && manuelGecmis[0].telefon === aramaNo.replace(/[\s\-\(\)]/g, '') && (
+            <Card className="p-6 bg-orange-950/30 border-orange-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-orange-400">Bu numara kayıtlı değil</h3>
+                  <p className="text-sm text-zinc-400 mt-1">Müşteri bilgilerini kaydedebilirsin</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => sipariseDonustur()}
+                    className="bg-green-600 hover:bg-green-700"
+                    size="sm"
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-1" />
+                    Yine de Sipariş Al
+                  </Button>
+                  <Button
+                    onClick={() => setKaydetModal(true)}
+                    className="bg-orange-600 hover:bg-orange-700"
+                    size="sm"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Müşteri Kaydet
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Manuel Arama Geçmişi */}
+          {manuelGecmis.length > 0 && (
+            <div>
+              <h2 className="text-lg font-bold mb-3 text-zinc-400 flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Bu Oturumdaki Aramalar
+              </h2>
+              <div className="space-y-2">
+                {manuelGecmis.map((arama, i) => (
+                  <Card
+                    key={i}
+                    className={`p-4 ${arama.musteri ? 'bg-zinc-800 border-zinc-700' : 'bg-zinc-800/50 border-zinc-800'}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${arama.musteri ? 'bg-green-600' : 'bg-zinc-600'}`}>
+                          <Phone className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-bold">{arama.musteri?.ad || 'Bilinmeyen Numara'}</p>
+                          <p className="text-sm text-zinc-400">{arama.telefon}</p>
+                          {arama.musteri?.adres && (
+                            <p className="text-xs text-zinc-500 flex items-center gap-1 mt-1">
+                              <MapPin className="w-3 h-3" />
+                              {arama.musteri.adres}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-zinc-500">
+                          {new Date(arama.zaman).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setAramaNo(arama.telefon)
+                            setBulunanMusteri(arama.musteri)
+                            sipariseDonustur(arama.telefon, arama.musteri)
+                          }}
+                          className="bg-yellow-500 text-black hover:bg-yellow-600"
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-1" />
+                          Sipariş
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
-      {/* Kayıtlı değilse kaydet butonu */}
-      {aramaNo && !bulunanMusteri && aramaGecmisi.length > 0 && aramaGecmisi[0].telefon === aramaNo.replace(/[\s\-\(\)]/g, '') && (
-        <Card className="p-6 bg-orange-950/30 border-orange-700 mb-6">
-          <div className="flex items-center justify-between">
+      {/* Webhook Kayıtları Sekmesi */}
+      {aktifTab === 'webhook' && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-bold text-orange-400">Bu numara kayıtlı değil</h3>
-              <p className="text-sm text-zinc-400 mt-1">Müşteri bilgilerini kaydedebilirsin</p>
+              <h2 className="text-lg font-bold text-zinc-300">Otomatik Kaydedilen Aramalar</h2>
+              <p className="text-sm text-zinc-500 mt-1">
+                VoIP/Telefon sisteminizden gelen webhook aramaları
+              </p>
             </div>
             <Button
-              onClick={() => setKaydetModal(true)}
-              className="bg-orange-600 hover:bg-orange-700"
+              onClick={() => restoran && getWebhookKayitlari(restoran.id)}
+              disabled={webhookYukleniyor}
+              className="bg-zinc-700 hover:bg-zinc-600"
+              size="sm"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Müşteri Kaydet
+              <RefreshCw className={`w-4 h-4 mr-1.5 ${webhookYukleniyor ? 'animate-spin' : ''}`} />
+              Yenile
             </Button>
           </div>
-        </Card>
-      )}
 
-      {/* Arama Geçmişi */}
-      {aramaGecmisi.length > 0 && (
-        <div>
-          <h2 className="text-lg font-bold mb-3 text-zinc-400">Son Aramalar</h2>
-          <div className="space-y-2">
-            {aramaGecmisi.map((arama, i) => (
-              <Card
-                key={i}
-                className={`p-4 ${arama.musteri ? 'bg-zinc-800 border-zinc-700' : 'bg-zinc-800/50 border-zinc-800'}`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${arama.musteri ? 'bg-green-600' : 'bg-zinc-600'}`}>
-                      <Phone className="w-5 h-5 text-white" />
+          {webhookYukleniyor ? (
+            <div className="text-center py-12 text-zinc-500">
+              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3" />
+              <p>Kayıtlar yükleniyor...</p>
+            </div>
+          ) : webhookKayitlari.length === 0 ? (
+            <Card className="p-12 bg-zinc-800 border-zinc-700 text-center">
+              <PhoneOff className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+              <h3 className="text-xl font-bold text-zinc-400 mb-2">Henüz otomatik arama kaydı yok</h3>
+              <p className="text-zinc-500 text-sm max-w-md mx-auto mb-6">
+                Twilio, Asterisk veya FreePBX gibi bir VoIP sistemi kurarak aramaların otomatik kaydedilmesini sağlayabilirsiniz.
+              </p>
+              <div className="bg-zinc-900 rounded-lg p-4 text-left max-w-md mx-auto">
+                <p className="text-xs text-zinc-400 font-mono mb-2">Webhook URL:</p>
+                <p className="text-xs text-green-400 font-mono break-all">
+                  POST /api/phone-webhook
+                </p>
+                <p className="text-xs text-zinc-500 mt-2">
+                  Test: GET /api/phone-webhook?test=true
+                </p>
+              </div>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {webhookKayitlari.map((kayit) => (
+                <Card key={kayit.id} className="p-4 bg-zinc-800 border-zinc-700 hover:bg-zinc-750 transition">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        kayit.musteriler ? 'bg-green-600' : 'bg-zinc-600'
+                      }`}>
+                        {getDurumIcon(kayit.durum)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold">
+                            {kayit.musteriler?.ad || kayit.arayan_numara}
+                          </p>
+                          <span className={`text-xs font-medium ${getDurumRenk(kayit.durum)}`}>
+                            {getDurumMetin(kayit.durum)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-zinc-400">{kayit.arayan_numara}</p>
+                        {kayit.musteriler?.adres && (
+                          <p className="text-xs text-zinc-500 flex items-center gap-1 mt-1">
+                            <MapPin className="w-3 h-3" />
+                            {kayit.musteriler.adres}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-bold">{arama.musteri?.ad || 'Bilinmeyen Numara'}</p>
-                      <p className="text-sm text-zinc-400">{arama.telefon}</p>
-                      {arama.musteri?.adres && (
-                        <p className="text-xs text-zinc-500 flex items-center gap-1 mt-1">
-                          <MapPin className="w-3 h-3" />
-                          {arama.musteri.adres}
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className="text-xs text-zinc-500">
+                          {new Date(kayit.arama_tarihi).toLocaleDateString('tr-TR', {
+                            day: '2-digit', month: '2-digit'
+                          })} {new Date(kayit.arama_tarihi).toLocaleTimeString('tr-TR', {
+                            hour: '2-digit', minute: '2-digit'
+                          })}
                         </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-500">
-                      {new Date(arama.zaman).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    {arama.musteri && (
+                        {kayit.sure > 0 && (
+                          <p className="text-xs text-zinc-500 flex items-center justify-end gap-1 mt-0.5">
+                            <Timer className="w-3 h-3" />
+                            {formatSure(kayit.sure)}
+                          </p>
+                        )}
+                        <p className="text-xs text-zinc-600 mt-0.5">{kayit.kaynak_sistem}</p>
+                      </div>
                       <Button
                         size="sm"
-                        onClick={() => {
-                          setAramaNo(arama.telefon)
-                          setBulunanMusteri(arama.musteri)
-                        }}
+                        onClick={() => sipariseDonustur(kayit.arayan_numara, kayit.musteriler)}
                         className="bg-yellow-500 text-black hover:bg-yellow-600"
                       >
                         <ShoppingCart className="w-4 h-4 mr-1" />
                         Sipariş
                       </Button>
-                    )}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
