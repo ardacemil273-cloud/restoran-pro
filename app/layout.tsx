@@ -6,7 +6,8 @@ import {
   LayoutDashboard, ShoppingCart, BarChart3, Settings, LogOut, QrCode, Package, Phone, Users,
   TrendingDown, Brain, Warehouse, CalendarDays, Tag, UtensilsCrossed, ChefHat, Menu, X,
   DollarSign, ChevronDown, ChevronRight, Layers, MapPin, Award, MessageCircle, Mic, Sparkles,
-  Crown, Building2, Shield, FileText, Zap
+  Crown, Building2, Shield, FileText, Zap, Truck, Gamepad2, Gift, History, Wallet, Search,
+  Headphones, ListChecks, Bell, Star
 } from 'lucide-react'
 import PwaInstall from '@/components/PwaInstall'
 import { Toaster } from 'sonner'
@@ -20,8 +21,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [menuGrupAcik, setMenuGrupAcik] = useState<Record<string, boolean>>({
     garson: true,
     isletme: true,
-    yonetim: false,
-    ayarlar: true
+    yonetim: true,
+    analiz: true,
+    ayarlar: true,
+    sadakat: true
   })
 
   useEffect(() => {
@@ -44,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     setMenuGrupAcik(prev => ({ ...prev, [grup]: !prev[grup] }))
   }
 
-  const NavItem = ({ href, icon: Icon, label, badge }: any) => {
+  const NavItem = ({ href, icon: Icon, label, badge, color }: any) => {
     const active = pathname === href
     return (
       <button
@@ -59,11 +62,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         }`}
       >
         <div className="flex items-center gap-3">
-          <Icon className={`w-[18px] h-[18px] transition-colors ${active ? 'text-primary' : 'group-hover:text-white'}`} />
+          <Icon className={`w-[18px] h-[18px] transition-colors ${active ? 'text-primary' : color || 'group-hover:text-white'}`} />
           <span className="text-sm font-medium tracking-tight">{label}</span>
         </div>
         {badge && (
-          <span className="bg-primary/20 text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-primary/20 uppercase tracking-tighter">
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border uppercase tracking-tighter ${
+            badge === 'AI' ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/20' : 'bg-primary/20 text-primary border-primary/20'
+          }`}>
             {badge}
           </span>
         )}
@@ -75,7 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <div className="space-y-1">
       <button 
         onClick={() => toggleGrup(id)}
-        className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold text-white/30 uppercase tracking-widest hover:text-white/50 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 text-[10px] font-black text-white/30 uppercase tracking-[0.2em] hover:text-white/50 transition-colors"
       >
         {label}
         {menuGrupAcik[id] ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -134,31 +139,43 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* Sidebar Navigation */}
             <nav className="flex-1 overflow-y-auto px-4 space-y-6 custom-scrollbar pb-6">
               <div className="space-y-1">
-                <NavItem href="/dashboard" icon={LayoutDashboard} label="Panel" />
+                <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+                <NavItem href="/tek-panel" icon={Layers} label="Tek Panel" badge="Yemek+Getir" color="text-orange-400" />
               </div>
 
               <NavGroup label="Garson Paneli" id="garson">
-                <NavItem href="/masalar" icon={Layers} label="Masalar" />
+                <NavItem href="/masalar" icon={MapPin} label="Masa Haritası" />
                 <NavItem href="/siparisler" icon={ShoppingCart} label="Siparişler" />
-                <NavItem href="/mutfak-ekrani" icon={ChefHat} label="Mutfak" />
-                <NavItem href="/kasa" icon={DollarSign} label="Kasa" />
+                <NavItem href="/mutfak-ekrani" icon={ChefHat} label="Mutfak Ekranı" />
+                <NavItem href="/ai-sesli-siparis" icon={Mic} label="Sesli Sipariş" badge="AI" color="text-cyan-400" />
+                <NavItem href="/kasa" icon={Wallet} label="Kasa / Ödeme" />
               </NavGroup>
 
-              <NavGroup label="İşletme" id="isletme">
-                <NavItem href="/urunler" icon={Package} label="Ürün Yönetimi" />
-                <NavItem href="/kategoriler" icon={Tag} label="Kategoriler" />
+              <NavGroup label="Operasyon" id="isletme">
+                <NavItem href="/paket-siparis" icon={Package} label="Paket Servis" />
+                <NavItem href="/kurye-takip" icon={Truck} label="Kurye Takibi" color="text-blue-400" />
+                <NavItem href="/rezervasyon" icon={CalendarDays} label="Rezervasyonlar" />
+                <NavItem href="/urunler" icon={ListChecks} label="Ürün Yönetimi" />
                 <NavItem href="/stok" icon={Warehouse} label="Stok Takibi" badge="AI" />
-                <NavItem href="/musteriler" icon={Users} label="Müşteriler" />
               </NavGroup>
 
-              <NavGroup label="Yönetim" id="yonetim">
-                <NavItem href="/rapor" icon={BarChart3} label="Raporlar" />
-                <NavItem href="/subeler" icon={Building2} label="Şubeler" />
-                <NavItem href="/personel" icon={Shield} label="Personel" />
+              <NavGroup label="Müşteri & Sadakat" id="sadakat">
+                <NavItem href="/musteriler" icon={Users} label="Müşteri Rehberi" />
+                <NavItem href="/sadakat-oyun" icon={Gamepad2} label="Çarkıfelek" badge="Yeni" color="text-purple-400" />
+                <NavItem href="/indirimler" icon={Tag} label="Kampanyalar" />
+                <NavItem href="/whatsapp-siparisler" icon={MessageCircle} label="WP Siparişleri" color="text-green-400" />
               </NavGroup>
 
-              <NavGroup label="Ayarlar" id="ayarlar">
-                <NavItem href="/qr-kodlar" icon={QrCode} label="QR Kodlar" />
+              <NavGroup label="Yönetim & Analiz" id="analiz">
+                <NavItem href="/rapor" icon={BarChart3} label="Satış Raporları" />
+                <NavItem href="/patron-merkezi" icon={Crown} label="Patron Merkezi" color="text-yellow-400" />
+                <NavItem href="/garson-performans" icon={Star} label="Garson Primleri" />
+                <NavItem href="/ai-analiz" icon={Brain} label="AI Tahminleme" badge="AI" />
+              </NavGroup>
+
+              <NavGroup label="Sistem" id="ayarlar">
+                <NavItem href="/qr-kodlar" icon={QrCode} label="QR Menü Yönetimi" />
+                <NavItem href="/subeler" icon={Building2} label="Şube Yönetimi" />
                 <NavItem href="/ayarlar" icon={Settings} label="Genel Ayarlar" />
               </NavGroup>
             </nav>
@@ -214,19 +231,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
               
               <nav className="space-y-6">
-                <NavItem href="/dashboard" icon={LayoutDashboard} label="Panel" />
+                <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+                <NavItem href="/tek-panel" icon={Layers} label="Tek Panel" badge="Yemek+Getir" />
+                
                 <NavGroup label="Garson Paneli" id="garson">
-                  <NavItem href="/masalar" icon={Layers} label="Masalar" />
+                  <NavItem href="/masalar" icon={MapPin} label="Masalar" />
                   <NavItem href="/siparisler" icon={ShoppingCart} label="Siparişler" />
-                  <NavItem href="/mutfak-ekrani" icon={ChefHat} label="Mutfak" />
-                  <NavItem href="/kasa" icon={DollarSign} label="Kasa" />
+                  <NavItem href="/ai-sesli-siparis" icon={Mic} label="Sesli Sipariş" />
                 </NavGroup>
-                <NavGroup label="Ayarlar" id="ayarlar">
-                  <NavItem href="/ayarlar" icon={Settings} label="Ayarlar" />
+
+                <NavGroup label="İşletme" id="isletme">
+                  <NavItem href="/paket-siparis" icon={Package} label="Paket Servis" />
+                  <NavItem href="/urunler" icon={ListChecks} label="Ürünler" />
+                  <NavItem href="/stok" icon={Warehouse} label="Stok" />
+                </NavGroup>
+
+                <NavGroup label="Yönetim" id="analiz">
+                  <NavItem href="/rapor" icon={BarChart3} label="Raporlar" />
+                  <NavItem href="/patron-merkezi" icon={Crown} label="Patron Merkezi" />
+                </NavGroup>
+
+                <div className="pt-6 border-t border-white/5">
                   <button onClick={cikisYap} className="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 font-bold">
                     <LogOut size={18} /> Oturumu Kapat
                   </button>
-                </NavGroup>
+                </div>
               </nav>
             </div>
           </div>
