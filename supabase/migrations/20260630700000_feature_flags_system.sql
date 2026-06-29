@@ -57,7 +57,7 @@ ALTER TABLE otomatik_siparisler
 CREATE TABLE IF NOT EXISTS cark_cevir_kayitlari (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restoran_id UUID NOT NULL REFERENCES restoranlar(id) ON DELETE CASCADE,
-  masa_id UUID REFERENCES masalar(id),
+  masa_id BIGINT REFERENCES masalar(id),
   musteri_telefon TEXT,
   odul_tipi TEXT NOT NULL, -- 'indirim', 'puan', 'ucretsiz_urun', 'bedava_icecek'
   odul_degeri DECIMAL(10,2),
