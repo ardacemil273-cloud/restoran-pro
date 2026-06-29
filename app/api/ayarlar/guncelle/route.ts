@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    const { id, ad, slug, aciklama, logo_url, tema_renk, telefon, adres } = body
+    const { id, ad, slug, aciklama, logo_url, tema_renk, telefon, adres, ozellik_ayarlari } = body
 
     if (!id || !ad || !slug) {
       return NextResponse.json({
@@ -19,17 +19,24 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
+    const updatePayload: Record<string, any> = {
+      ad,
+      slug,
+      aciklama: aciklama || null,
+      logo_url: logo_url || null,
+      tema_renk: tema_renk || '#f59e0b',
+      telefon: telefon || null,
+      adres: adres || null
+    }
+
+    // Özellik ayarları varsa ekle
+    if (ozellik_ayarlari !== undefined) {
+      updatePayload.ozellik_ayarlari = ozellik_ayarlari
+    }
+
     const { error } = await supabaseAdmin
       .from('restoranlar')
-      .update({
-        ad,
-        slug,
-        aciklama: aciklama || null,
-        logo_url: logo_url || null,
-        tema_renk: tema_renk || '#f59e0b',
-        telefon: telefon || null,
-        adres: adres || null
-      })
+      .update(updatePayload)
       .eq('id', id)
 
     if (error) {
