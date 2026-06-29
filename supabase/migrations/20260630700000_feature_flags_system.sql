@@ -43,6 +43,15 @@ ALTER TABLE restoranlar
     "dinamik_fiyat": {
       "aktif": false,
       "aciklama": "Yoğun saatlerde otomatik fiyat ayarı"
+    },
+    "sesli_siparis": {
+      "aktif": false,
+      "aciklama": "Müşteri ve garson sesle sipariş verebilsin"
+    },
+    "dogum_gunu_indirim": {
+      "aktif": true,
+      "indirim_orani": 20,
+      "aciklama": "Doğum günü müşterilere özel indirim"
     }
   }'::jsonb;
 
