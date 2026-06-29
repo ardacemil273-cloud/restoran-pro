@@ -114,8 +114,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
-      <body className="bg-background text-white overflow-hidden">
-        <div className="flex h-screen bg-background">
+      <body className="bg-background text-white overflow-hidden h-dvh">
+        <div className="flex h-dvh bg-background">
           {/* Desktop Sidebar */}
           <aside className="hidden lg:flex w-72 flex-col bg-card border-r border-white/5 relative z-40 overflow-y-auto">
             <div className="p-6 flex flex-col min-h-full">
@@ -188,9 +188,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </aside>
 
           {/* Main Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden h-dvh">
             {/* Mobile Top Bar */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-white/5 px-4 h-16 flex items-center justify-between">
+            <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-white/5 px-4 h-16 flex items-center justify-between safe-area-inset-top">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/50 rounded-lg flex items-center justify-center">
                   <Zap className="w-5 h-5 text-black font-black" />
@@ -206,12 +206,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             {/* Main Content Area */}
-            <main className="flex-1 relative overflow-y-auto pt-16 lg:pt-0 bg-background custom-scrollbar">
+            <main className="flex-1 relative overflow-y-auto pt-16 lg:pt-0 bg-background custom-scrollbar pb-32 lg:pb-0 safe-area-inset-bottom">
               {children}
             </main>
           </div>
 
-          {/* Mobile Menu Overlay - Kapatma butonu ve yerleşim düzeltildi */}
+          {/* Mobile Menu Overlay */}
           <AnimatePresence>
             {mobilMenuAcik && (
               <motion.div
@@ -219,13 +219,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -300 }}
                 transition={{ duration: 0.3 }}
-                className="lg:hidden fixed inset-0 z-[45] bg-card/95 backdrop-blur-xl overflow-y-auto pt-20 pb-20"
+                className="lg:hidden fixed inset-0 z-[45] bg-card/95 backdrop-blur-xl overflow-y-auto pt-20 pb-40 safe-area-inset-bottom"
               >
                 <div className="p-4 flex flex-col min-h-full">
                   {/* Kapatma Butonu */}
                   <button
                     onClick={() => setMobilMenuAcik(false)}
-                    className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-all z-50"
+                    className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-lg transition-all z-50 safe-area-inset-top"
                   >
                     <X size={24} className="text-white" />
                   </button>
@@ -274,7 +274,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     </NavGroup>
                   </nav>
 
-                  {/* Logout Button - Alt kısımda sabit */}
+                  {/* Logout Button */}
                   <div className="pt-6 border-t border-white/5 mt-auto">
                     <button
                       onClick={() => {

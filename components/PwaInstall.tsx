@@ -14,9 +14,7 @@ export default function PwaInstall() {
   const [showPrompt, setShowPrompt] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false)
   const [isInstalling, setIsInstalling] = useState(false)
-  const [dismissCount, setDismissCount] = useState(0)
 
   useEffect(() => {
     // iOS kontrolü
@@ -26,112 +24,67 @@ export default function PwaInstall() {
     // Standalone mode kontrolü
     const isStandalone = 
       window.matchMedia('(display-mode: standalone)').matches || 
-      (window.navigator as any).standalone === true ||
-      document.referrer.includes('android-app://')
+      (window.navigator as any).standalone === true
     
     if (isStandalone) {
       setIsInstalled(true)
       return
     }
 
-    // localStorage'dan dismiss count'u oku
-    const savedDismissCount = localStorage.getItem('pwa_dismiss_count')
-    setDismissCount(savedDismissCount ? parseInt(savedDismissCount) : 0)
-
     // beforeinstallprompt event'ini yakala
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       const event = e as BeforeInstallPromptEvent
       setDeferredPrompt(event)
-      
-      // 3 saniye sonra göster
-      const timer = setTimeout(() => {
-        setShowPrompt(true)
-      }, 3000)
-
-      return () => clearTimeout(timer)
+      // Hemen göster
+      setShowPrompt(true)
     }
 
-    // iOS için alternatif
-    if (isIOSDevice) {
-      const iosTimer = setTimeout(() => {
-        setShowIOSPrompt(true)
-      }, 3000)
-      return () => clearTimeout(iosTimer)
-    }
-
-    // Event listener'ı ekle
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt, { capture: true })
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
 
     // App yükleme başarılı oldu mu
     const handleAppInstalled = () => {
       setIsInstalled(true)
       setShowPrompt(false)
-      setShowIOSPrompt(false)
       setIsInstalling(false)
       setDeferredPrompt(null)
-      localStorage.removeItem('pwa_dismiss_count')
       toast.success('✅ Uygulama başarıyla yüklendi!')
     }
 
     window.addEventListener('appinstalled', handleAppInstalled)
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt, true)
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
   }, [])
 
   const handleInstall = async () => {
-    if (!deferredPrompt) {
-      toast.error('Tarayıcı henüz hazır değil. Lütfen sayfayı yenileyin.')
-      return
-    }
+    if (!deferredPrompt) return
 
     setIsInstalling(true)
     
     try {
-      // Prompt'u göster
       await deferredPrompt.prompt()
-      
-      // Kullanıcı seçimini bekle
       const { outcome } = await deferredPrompt.userChoice
 
       if (outcome === 'accepted') {
         toast.success('✅ Uygulama yükleniyor...')
         setDeferredPrompt(null)
         setShowPrompt(false)
-        localStorage.removeItem('pwa_dismiss_count')
       } else {
-        toast.info('Yükleme iptal edildi')
         setIsInstalling(false)
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Install error:', err)
-      toast.error('Yükleme başarısız: ' + (err?.message || 'Bilinmeyen hata'))
       setIsInstalling(false)
     }
   }
 
-  const handleDismiss = () => {
-    const newCount = dismissCount + 1
-    setDismissCount(newCount)
-    localStorage.setItem('pwa_dismiss_count', newCount.toString())
-    setShowPrompt(false)
-    
-    // 3 sayfa geçişinden sonra tekrar göster
-    if (newCount < 3) {
-      const timer = setTimeout(() => {
-        setShowPrompt(true)
-      }, 30000) // 30 saniye sonra tekrar göster
-      return () => clearTimeout(timer)
-    }
-  }
-
-  if (isInstalled) return null
+  if (isInstalled || !deferredPrompt) return null
 
   // iOS için özel talimat
-  if (isIOS && showIOSPrompt) {
+  if (isIOS) {
     return (
       <AnimatePresence>
         <motion.div
@@ -152,7 +105,7 @@ export default function PwaInstall() {
                 </div>
               </div>
               <button
-                onClick={() => setShowIOSPrompt(false)}
+                onClick={() => setShowPrompt(false)}
                 className="p-1 text-white/30 hover:text-white transition-all"
               >
                 <X size={16} />
@@ -163,7 +116,7 @@ export default function PwaInstall() {
               <p>2️⃣ "Ana Ekrana Ekle" seçeneğini seç</p>
             </div>
             <button
-              onClick={() => setShowIOSPrompt(false)}
+              onClick={() => setShowPrompt(false)}
               className="w-full px-4 py-2.5 bg-primary hover:bg-primary/90 text-black font-black rounded-xl transition-all text-sm"
             >
               Anladım
@@ -174,8 +127,8 @@ export default function PwaInstall() {
     )
   }
 
-  // Android ve diğer tarayıcılar için - Kalıcı ve tekrar görünen
-  if (!isIOS && showPrompt && dismissCount < 3) {
+  // Android ve diğer tarayıcılar
+  if (showPrompt && deferredPrompt) {
     return (
       <AnimatePresence>
         <motion.div
@@ -206,8 +159,8 @@ export default function PwaInstall() {
                 <div className="flex items-center gap-3 pt-3">
                   <button
                     onClick={handleInstall}
-                    disabled={isInstalling || !deferredPrompt}
-                    className="flex-1 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-black text-xs font-black py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95"
+                    disabled={isInstalling}
+                    className="flex-1 bg-primary hover:bg-primary/90 disabled:opacity-50 text-black text-xs font-black py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95"
                   >
                     {isInstalling ? (
                       <>
@@ -224,24 +177,17 @@ export default function PwaInstall() {
                     )}
                   </button>
                   <button
-                    onClick={handleDismiss}
+                    onClick={() => setShowPrompt(false)}
                     disabled={isInstalling}
                     className="px-3 py-2.5 text-white/30 hover:text-white transition-all text-xs font-bold disabled:opacity-50"
                   >
                     DAHA SONRA
                   </button>
                 </div>
-
-                {/* Dismiss Counter */}
-                {dismissCount > 0 && (
-                  <p className="text-[10px] text-white/30 text-center mt-2">
-                    ({3 - dismissCount} hatırlatma kaldı)
-                  </p>
-                )}
               </div>
               
               <button
-                onClick={handleDismiss}
+                onClick={() => setShowPrompt(false)}
                 disabled={isInstalling}
                 className="absolute top-2 right-2 p-1 text-white/20 hover:text-white transition-all disabled:opacity-50"
               >
