@@ -1,8 +1,5 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* ============================================
    RESTORAN PRO - PREMIUM 2026 DESIGN SYSTEM
@@ -20,8 +17,8 @@
   --primary-foreground: 0 0% 0%;
   --secondary: 220 14% 96%;
   --secondary-foreground: 224 71% 4%;
-  --muted: 220 14% 96%;
-  --muted-foreground: 220 9% 46%;
+  --muted: 220 13% 91%;
+  --muted-foreground: 215 16% 47%;
   --accent: 38 92% 50%;
   --accent-foreground: 0 0% 0%;
   --destructive: 0 84% 60%;
@@ -29,260 +26,58 @@
   --border: 220 13% 91%;
   --input: 220 13% 91%;
   --ring: 38 92% 50%;
-  --radius: 0.75rem;
-  --sidebar: 224 71% 4%;
-  --sidebar-foreground: 0 0% 95%;
-  --sidebar-primary: 38 92% 50%;
-  --sidebar-primary-foreground: 0 0% 0%;
-  --sidebar-accent: 220 14% 12%;
-  --sidebar-accent-foreground: 0 0% 95%;
-  --sidebar-border: 220 14% 12%;
-  --sidebar-ring: 38 92% 50%;
-  --chart-1: 38 92% 50%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 217 91% 60%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 0 84% 60%;
+  --radius: 0.5rem;
 }
 
-.dark {
+[data-theme="dark"] {
   --background: 224 71% 4%;
-  --background-secondary: 220 14% 8%;
-  --foreground: 210 40% 98%;
-  --card: 220 14% 8%;
-  --card-foreground: 210 40% 98%;
-  --popover: 220 14% 8%;
-  --popover-foreground: 210 40% 98%;
+  --background-secondary: 220 14% 5%;
+  --foreground: 0 0% 100%;
+  --card: 220 14% 6%;
+  --card-foreground: 0 0% 100%;
+  --popover: 220 14% 6%;
+  --popover-foreground: 0 0% 100%;
   --primary: 38 92% 50%;
   --primary-foreground: 0 0% 0%;
-  --secondary: 220 14% 12%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 220 14% 12%;
-  --muted-foreground: 215 20% 50%;
+  --secondary: 220 14% 15%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 220 14% 20%;
+  --muted-foreground: 215 16% 75%;
   --accent: 38 92% 50%;
   --accent-foreground: 0 0% 0%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 220 14% 14%;
-  --input: 220 14% 14%;
+  --border: 220 14% 15%;
+  --input: 220 14% 15%;
   --ring: 38 92% 50%;
-  --sidebar: 220 14% 5%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 38 92% 50%;
-  --sidebar-primary-foreground: 0 0% 0%;
-  --sidebar-accent: 220 14% 10%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 220 14% 10%;
-  --sidebar-ring: 38 92% 50%;
-  --chart-1: 38 92% 50%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 217 91% 60%;
-  --chart-4: 280 65% 60%;
-  --chart-5: 0 84% 60%;
 }
 
-* {
-  border-color: hsl(var(--border));
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+html.dark {
+  --background: 224 71% 4%;
+  --background-secondary: 220 14% 5%;
+  --foreground: 0 0% 100%;
+  --card: 220 14% 6%;
+  --card-foreground: 0 0% 100%;
+  --popover: 220 14% 6%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 38 92% 50%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 220 14% 15%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 220 14% 20%;
+  --muted-foreground: 215 16% 75%;
+  --accent: 38 92% 50%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 14% 15%;
+  --input: 220 14% 15%;
+  --ring: 38 92% 50%;
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-feature-settings: "rlig" 1, "calt" 1;
-}
-
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
-
-::selection {
-  background-color: hsl(var(--primary) / 0.2);
-  color: hsl(var(--foreground));
-}
-
-:focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-@layer utilities {
-  .gradient-text {
-    background: linear-gradient(135deg, hsl(38 92% 50%), hsl(25 95% 53%), hsl(0 84% 60%));
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .glass-effect {
-    background: hsl(var(--card) / 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border));
-  }
-
-  .glow-effect {
-    box-shadow: 0 0 20px hsl(38 92% 50% / 0.3), 0 0 40px hsl(38 92% 50% / 0.1);
-  }
-
-  .smooth-shadow {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
-  }
-
-  .transition-smooth {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .glass-card-hover {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    border-radius: calc(var(--radius) + 4px);
-    transition: all 0.2s ease;
-  }
-
-  .glass-card-hover:hover {
-    border-color: hsl(var(--primary) / 0.4);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
-  }
-
-  .stat-card {
-    background: hsl(var(--card));
-    border: 1px solid hsl(var(--border));
-    border-radius: calc(var(--radius) + 4px);
-    padding: 1.5rem;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, hsl(38 92% 50%), hsl(25 95% 53%));
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  .stat-card:hover::before { opacity: 1; }
-
-  .stat-card:hover {
-    border-color: hsl(38 92% 50% / 0.3);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-    transform: translateY(-2px);
-  }
-
-  .badge-success {
-    background: hsl(142 71% 45% / 0.15);
-    color: hsl(142 71% 35%);
-    border: 1px solid hsl(142 71% 45% / 0.3);
-  }
-
-  .badge-warning {
-    background: hsl(38 92% 50% / 0.15);
-    color: hsl(38 92% 40%);
-    border: 1px solid hsl(38 92% 50% / 0.3);
-  }
-
-  .badge-danger {
-    background: hsl(0 84% 60% / 0.15);
-    color: hsl(0 84% 50%);
-    border: 1px solid hsl(0 84% 60% / 0.3);
-  }
-
-  .badge-info {
-    background: hsl(217 91% 60% / 0.15);
-    color: hsl(217 91% 50%);
-    border: 1px solid hsl(217 91% 60% / 0.3);
-  }
-
-  .dark .badge-success { background: hsl(142 71% 45% / 0.2); color: hsl(142 71% 55%); }
-  .dark .badge-warning { background: hsl(38 92% 50% / 0.2); color: hsl(38 92% 60%); }
-  .dark .badge-danger { background: hsl(0 84% 60% / 0.2); color: hsl(0 84% 65%); }
-  .dark .badge-info { background: hsl(217 91% 60% / 0.2); color: hsl(217 91% 70%); }
-
-  .animate-float { animation: float 3s ease-in-out infinite; }
-  .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-  .animate-shimmer {
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    background-size: 1000px 100%;
-    animation: shimmer 2s infinite;
-  }
-  .animate-slide-in-up { animation: slide-in-up 0.3s ease; }
-  .animate-fade-in { animation: fade-in 0.3s ease; }
-  .animate-scale-in { animation: scale-in 0.2s ease; }
-}
-
-.skeleton {
-  animation: shimmer 2s infinite;
-  background: linear-gradient(90deg, hsl(var(--muted)), hsl(var(--muted) / 0.5), hsl(var(--muted)));
-  background-size: 1000px 100%;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 1; box-shadow: 0 0 20px hsl(38 92% 50% / 0.5); }
-  50% { opacity: 0.8; box-shadow: 0 0 30px hsl(38 92% 50% / 0.8); }
-}
-
-@keyframes shimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
-}
-
-@keyframes slide-in-up {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes scale-in {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-@media print {
-  body { background-color: white !important; color: black !important; }
-  .no-print, aside, nav { display: none !important; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-.recharts-default-tooltip {
-  background: hsl(var(--card)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  border-radius: var(--radius) !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
-}
-
-.recharts-tooltip-label {
-  color: hsl(var(--foreground)) !important;
-  font-weight: 600 !important;
+  background-color: hsl(224 71% 4%);
+  color: white;
 }
 
 /* ============================================
@@ -306,20 +101,43 @@ body {
   width: 4px;
   height: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(255,255,255,0.1);
   border-radius: 2px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255,255,255,0.2);
 }
 
 /* ============================================
-   HOVER BG UTILITY
+   ANIMATIONS
    ============================================ */
-.hover\:bg-white\/8:hover {
-  background-color: rgba(255,255,255,0.08);
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-in-out;
 }
