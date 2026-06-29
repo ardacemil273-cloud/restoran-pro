@@ -81,6 +81,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         { ad: 'WhatsApp Siparişler', path: '/whatsapp-siparisler', icon: MessageCircle },
         { ad: 'AI Sesli Sipariş', path: '/ai-sesli-siparis', icon: Mic },
         { ad: 'Mutfak Ekranı', path: '/mutfak-ekrani', icon: UtensilsCrossed },
+        { ad: 'Tek Panel', path: '/tek-panel', icon: Layers },
         { ad: 'Kasa', path: '/kasa', icon: DollarSign },
         { ad: 'Gelen Aramalar', path: '/aramalar', icon: Phone },
       ]
