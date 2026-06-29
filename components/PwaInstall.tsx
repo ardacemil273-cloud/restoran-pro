@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Download, X, Smartphone } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 
 export default function PwaInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
@@ -9,13 +10,14 @@ export default function PwaInstall() {
   const [isIOS, setIsIOS] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
   const [showIOSPrompt, setShowIOSPrompt] = useState(false)
+  const [isInstalling, setIsInstalling] = useState(false)
 
   useEffect(() => {
     // iOS kontrolü
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent)
     setIsIOS(isIOSDevice)
 
-    // Standalone mode kontrolü (zaten yüklü mü?)
+    // Standalone mode kontrolü
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          (window.navigator as any).standalone === true
     
@@ -27,6 +29,7 @@ export default function PwaInstall() {
     // beforeinstallprompt event'ini yakala
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
+      console.log('beforeinstallprompt triggered')
       setDeferredPrompt(e)
       
       // 5 saniye sonra göster
@@ -35,7 +38,7 @@ export default function PwaInstall() {
       }, 5000)
     }
 
-    // iOS için alternatif: Safari'de göster
+    // iOS için alternatif
     if (isIOSDevice) {
       setTimeout(() => {
         setShowIOSPrompt(true)
@@ -44,18 +47,22 @@ export default function PwaInstall() {
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt, true)
 
-    // App yükleme başarılı oldu mu kontrolü
+    // App yükleme başarılı oldu mu
     const handleAppInstalled = () => {
+      console.log('App installed successfully')
       setIsInstalled(true)
       setShowPrompt(false)
       setShowIOSPrompt(false)
+      setIsInstalling(false)
+      toast.success('✅ Uygulama başarıyla yüklendi!')
     }
 
     window.addEventListener('appinstalled', handleAppInstalled)
 
-    // Fallback: Eğer deferredPrompt gelmezse, manuel olarak göster
+    // Fallback timer
     const fallbackTimer = setTimeout(() => {
       if (!deferredPrompt && !isIOSDevice && !isStandalone) {
+        console.log('Fallback: showing install prompt')
         setShowPrompt(true)
       }
     }, 8000)
@@ -65,21 +72,33 @@ export default function PwaInstall() {
       window.removeEventListener('appinstalled', handleAppInstalled)
       clearTimeout(fallbackTimer)
     }
-  }, [deferredPrompt])
+  }, [])
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
-      // Fallback: Manuel olarak Chrome'u aç
-      toast.info('Lütfen tarayıcı menüsünden "Uygulamayı Yükle" seçeneğini kullanın')
+      toast.info('Tarayıcı menüsünden "Uygulamayı Yükle" seçeneğini kullanın')
       return
     }
 
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
+    setIsInstalling(true)
+    
+    try {
+      deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
 
-    if (outcome === 'accepted') {
-      setDeferredPrompt(null)
-      setShowPrompt(false)
+      if (outcome === 'accepted') {
+        console.log('User accepted install prompt')
+        setDeferredPrompt(null)
+        setShowPrompt(false)
+        toast.success('✅ Uygulama yükleniyor...')
+      } else {
+        console.log('User dismissed install prompt')
+        setIsInstalling(false)
+      }
+    } catch (err) {
+      console.error('Install error:', err)
+      toast.error('Yükleme başarısız oldu')
+      setIsInstalling(false)
     }
   }
 
@@ -161,14 +180,27 @@ export default function PwaInstall() {
                 <div className="flex items-center gap-3 pt-3">
                   <button
                     onClick={handleInstall}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-black text-xs font-black py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95"
+                    disabled={isInstalling}
+                    className="flex-1 bg-primary hover:bg-primary/90 disabled:opacity-50 text-black text-xs font-black py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95"
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    ŞİMDİ YÜKLE
+                    {isInstalling ? (
+                      <>
+                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>
+                          <Download className="w-3.5 h-3.5" />
+                        </motion.div>
+                        YÜKLENIYOR
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-3.5 h-3.5" />
+                        ŞİMDİ YÜKLE
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={() => setShowPrompt(false)}
-                    className="px-3 py-2.5 text-white/30 hover:text-white transition-all text-xs font-bold"
+                    disabled={isInstalling}
+                    className="px-3 py-2.5 text-white/30 hover:text-white transition-all text-xs font-bold disabled:opacity-50"
                   >
                     DAHA SONRA
                   </button>
@@ -177,7 +209,8 @@ export default function PwaInstall() {
               
               <button
                 onClick={() => setShowPrompt(false)}
-                className="absolute top-2 right-2 p-1 text-white/20 hover:text-white transition-all"
+                disabled={isInstalling}
+                className="absolute top-2 right-2 p-1 text-white/20 hover:text-white transition-all disabled:opacity-50"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -190,6 +223,3 @@ export default function PwaInstall() {
 
   return null
 }
-
-// toast import'u için dummy
-const toast = { info: (msg: string) => console.log(msg) }
