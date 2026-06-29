@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users,
   TrendingDown, Brain, Warehouse, CalendarDays, Tag, UtensilsCrossed, ChefHat, Menu, X,
-  DollarSign, ChevronDown, ChevronRight, Layers, MapPin, Award, MessageCircle, Mic
+  DollarSign, ChevronDown, ChevronRight, Layers, MapPin, Award, MessageCircle, Mic, Sparkles
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PwaInstall from '@/components/PwaInstall'
@@ -103,6 +103,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       baslik: 'Müşteri',
       items: [
         { ad: 'Müşteriler', path: '/musteriler', icon: Users },
+        { ad: 'Sadakat & Oyun', path: '/sadakat-oyun', icon: Sparkles },
         { ad: 'Rezervasyon', path: '/rezervasyon', icon: CalendarDays },
         { ad: 'Garsonlar', path: '/garsonlar', icon: UtensilsCrossed },
       ]
