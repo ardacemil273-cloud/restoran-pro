@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, ShoppingCart, ChartBar as BarChart3, Settings, LogOut, QrCode, Package, Phone, Users,
   TrendingDown, Brain, Warehouse, CalendarDays, Tag, UtensilsCrossed, ChefHat, Menu, X,
-  DollarSign, ChevronDown, ChevronRight, Layers, MapPin, Award
+  DollarSign, ChevronDown, ChevronRight, Layers, MapPin, Award, MessageCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import PwaInstall from '@/components/PwaInstall'
@@ -78,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         { ad: 'Masalar', path: '/masalar', icon: ChefHat },
         { ad: 'Masa Haritası', path: '/masa-harita', icon: MapPin },
         { ad: 'Siparişler', path: '/siparisler', icon: ShoppingCart },
+        { ad: 'WhatsApp Siparişler', path: '/whatsapp-siparisler', icon: MessageCircle },
         { ad: 'Mutfak Ekranı', path: '/mutfak-ekrani', icon: UtensilsCrossed },
         { ad: 'Kasa', path: '/kasa', icon: DollarSign },
         { ad: 'Gelen Aramalar', path: '/aramalar', icon: Phone },
