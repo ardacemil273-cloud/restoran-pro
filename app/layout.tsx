@@ -111,6 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         { ad: 'Raporlar', path: '/rapor', icon: BarChart3 },
         { ad: 'Garson Performans', path: '/garson-performans', icon: Award },
         { ad: 'AI Stok Tahmin', path: '/stok-tahmin', icon: Brain },
+        { ad: 'Finansal Dashboard', path: '/finansal-dashboard', icon: DollarSign },
         { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain },
       ]
     },
