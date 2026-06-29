@@ -93,6 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         { ad: 'Ürünler', path: '/urunler', icon: Package },
         { ad: 'Kategoriler', path: '/kategoriler', icon: Layers },
         { ad: 'Stok Takibi', path: '/stok', icon: Warehouse },
+        { ad: 'Otomatik Tedarik', path: '/otomatik-tedarik', icon: Package },
         { ad: 'Gider Takibi', path: '/giderler', icon: TrendingDown },
         { ad: 'İndirimler', path: '/indirimler', icon: Tag },
         { ad: 'QR Kodlar', path: '/qr-kodlar', icon: QrCode },
