@@ -8,7 +8,7 @@ import {
   Check, Star, ArrowRight, Menu, X, Users, Package,
   TrendingUp, Clock, CreditCard, Bell, Crown
 } from 'lucide-react'
-import SmartInstallBanner from '@/components/SmartInstallBanner'
+
 
 export default function LandingPage() {
   const [menuAcik, setMenuAcik] = useState(false)
@@ -180,7 +180,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white">
-      <SmartInstallBanner />
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-zinc-900/95 backdrop-blur border-b border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">

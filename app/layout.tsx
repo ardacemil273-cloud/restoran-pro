@@ -13,9 +13,9 @@ import PwaInstall from '@/components/PwaInstall'
 import StokUyari from '@/components/StokUyari'
 import { OnboardingTour } from '@/components/OnboardingTour'
 import { PremiumUX } from '@/components/PremiumUX'
+import ThemeProvider from '@/components/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
 import { useMobileMenu } from '@/hooks/useMobileMenu'
-import PwaPrompt from '@/components/PwaPrompt'
 import './globals.css'
 import './globals-mobile.css'
 
@@ -25,10 +25,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [user, setUser] = useState<any>(null)
   const [mobilMenuAcik, setMobilMenuAcik] = useState(false)
   const [menuGrupAcik, setMenuGrupAcik] = useState<Record<string, boolean>>({
+    garson: true,
     isletme: true,
     yonetim: true,
+    musteri: true,
     analiz: true,
-    sistem: true
+    guvenlik: true,
+    ayarlar: true
   })
 
   // Mobil menü scroll hatası düzeltmesi
@@ -77,17 +80,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   const menuGruplari = [
     {
+      id: 'garson',
+      baslik: 'Garson & Mutfak',
+      items: [
+        { ad: 'Garson Paneli', path: '/garson', icon: UtensilsCrossed },
+        { ad: 'Mutfak Ekranı', path: '/garson/mutfak', icon: ChefHat },
+      ]
+    },
+    {
       id: 'isletme',
       baslik: 'İşletme',
       items: [
         { ad: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { ad: 'Masalar', path: '/masalar', icon: ChefHat },
-        { ad: 'Garson Paneli', path: '/garson', icon: UtensilsCrossed },
         { ad: 'Masa Haritası', path: '/masa-harita', icon: MapPin },
         { ad: 'Siparişler', path: '/siparisler', icon: ShoppingCart },
         { ad: 'WhatsApp Siparişler', path: '/whatsapp-siparisler', icon: MessageCircle },
         { ad: 'AI Sesli Sipariş', path: '/ai-sesli-siparis', icon: Mic },
-        { ad: 'Mutfak Ekranı', path: '/mutfak-ekrani', icon: UtensilsCrossed },
         { ad: 'Tek Panel', path: '/tek-panel', icon: Layers },
         { ad: 'Kasa', path: '/kasa', icon: DollarSign },
         { ad: 'Gelen Aramalar', path: '/aramalar', icon: Phone },
@@ -118,7 +127,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       ]
     },
     {
-      id: 'isletme',
+      id: 'isletme_yonetimi',
       baslik: 'İşletme Yönetimi',
       items: [
         { ad: 'Şubeler', path: '/subeler', icon: Building2 },
@@ -249,7 +258,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="bg-zinc-900 text-white">
         <PwaInstall />
-        <PwaPrompt />
+        <ThemeProvider />
         <Toaster richColors position="top-right" />
 
         {/* Mobil Header */}

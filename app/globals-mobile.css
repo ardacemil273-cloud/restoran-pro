@@ -223,3 +223,77 @@ input::placeholder, textarea::placeholder {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(113, 113, 122, 0.8);
 }
+
+
+/* Enhanced Mobile Accessibility */
+@media (max-width: 768px) {
+  /* Improved touch targets */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Better form inputs */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  /* Improved focus states */
+  input:focus,
+  textarea:focus,
+  select:focus,
+  button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+  }
+
+  /* Better card spacing */
+  .card {
+    margin-bottom: 12px;
+  }
+
+  /* Responsive grid */
+  .grid-mobile {
+    grid-template-columns: 1fr;
+  }
+
+  /* Safe area for bottom sheets */
+  .bottom-sheet {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Tablet Optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .grid-tablet {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: more) {
+  button,
+  input,
+  select,
+  textarea {
+    border-width: 2px;
+  }
+}

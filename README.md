@@ -231,3 +231,87 @@ MIT License - Detaylar için LICENSE dosyasına bak
 ---
 
 **Restoran Pro** - Restoranınızı 2026'ya taşı! 🚀
+
+
+## 📱 PWA (Progressive Web App) Kurulumu
+
+### Otomatik Kurulum
+Uygulama otomatik olarak PWA olarak çalışır. Siteye girdiğinizde alt taraftan "Uygulamayı Yükle" bildirimi gelecektir.
+
+### Manuel Kurulum
+
+**Android (Chrome/Edge):**
+1. Siteyi ziyaret edin
+2. Menüden "Uygulamayı Yükle" seçin
+3. Onaylayın
+
+**iOS (Safari):**
+1. Siteyi Safari'de açın
+2. Paylaş butonuna tıklayın
+3. "Ana Ekrana Ekle" seçin
+4. Adı onaylayın
+
+**PC (Chrome/Edge):**
+1. Siteyi açın
+2. Menüden "Uygulamayı Yükle" seçin
+3. Onaylayın
+
+### PWA Özellikleri
+- ✅ Offline çalışma (Service Worker)
+- ✅ Push notifications
+- ✅ Home screen shortcut
+- ✅ Standalone mode
+- ✅ Fast loading
+- ✅ App-like experience
+
+## 🔧 Gelişmiş Kurulum
+
+### ESLint ve Prettier Konfigürasyonu
+```bash
+npm run lint
+npm run format
+```
+
+### TypeScript Kontrolü
+```bash
+npx tsc --noEmit
+```
+
+### Build Optimizasyonu
+```bash
+npm run build
+npm run start
+```
+
+## 🌐 Mobil Uyumluluk Kontrol Listesi
+
+- ✅ Responsive design (mobile-first)
+- ✅ Touch-friendly buttons (min 44x44px)
+- ✅ Safe area support (notch devices)
+- ✅ Viewport optimization
+- ✅ Font size optimization
+- ✅ Image optimization
+- ✅ Performance optimization
+- ✅ Accessibility (a11y)
+
+## 🎯 Sonraki Adımlar
+
+1. **Supabase Konfigürasyonu**: Tüm migration'ları çalıştırın
+2. **Ortam Değişkenleri**: `.env.local` dosyasını tamamlayın
+3. **Kullanıcı Oluşturma**: İlk restoran ve kullanıcı hesabını oluşturun
+4. **Ürün Ekleme**: Menü ürünlerini ekleyin
+5. **Masa Ayarı**: Masaları ve düzenini ayarlayın
+6. **Garson Ekleme**: Garson hesapları oluşturun
+
+## 🚀 Vercel Deploy Kontrol Listesi
+
+- [ ] `.env.local` değişkenlerini Vercel'e ekleyin
+- [ ] Build settings doğru mu?
+- [ ] Supabase bağlantısı çalışıyor mu?
+- [ ] PWA manifest doğru mu?
+- [ ] Service Worker kayıtlı mı?
+- [ ] HTTPS aktif mi?
+
+---
+
+**Restoran Pro** - Restoranınızı dijitalleştirin! 🍽️✨
