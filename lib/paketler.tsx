@@ -17,7 +17,10 @@ export const PAKETLER = {
       musteriler: true,
       indirimler: true,
       sinirsiz_masa: false,
-      sinirsiz_urun: false
+      sinirsiz_urun: false,
+      ai_sesli_siparis: false,
+      sadakat_sistemi: false,
+      whatsapp_entegrasyon: false
     },
     limit: {
       masa: 5,
@@ -26,7 +29,7 @@ export const PAKETLER = {
   },
   big: {
     ad: 'Big',
-    fiyat: 199,
+    fiyat: 149,
     ozellikler: {
       garson_panel: true,
       kasa: true,
@@ -39,7 +42,10 @@ export const PAKETLER = {
       musteriler: true,
       indirimler: true,
       sinirsiz_masa: true,
-      sinirsiz_urun: true
+      sinirsiz_urun: true,
+      ai_sesli_siparis: false,
+      sadakat_sistemi: false,
+      whatsapp_entegrasyon: false
     },
     limit: {
       masa: 999,
@@ -48,7 +54,7 @@ export const PAKETLER = {
   },
   pro: {
     ad: 'Pro',
-    fiyat: 399,
+    fiyat: 225,
     ozellikler: {
       garson_panel: true,
       kasa: true,
@@ -61,7 +67,35 @@ export const PAKETLER = {
       musteriler: true,
       indirimler: true,
       sinirsiz_masa: true,
-      sinirsiz_urun: true
+      sinirsiz_urun: true,
+      ai_sesli_siparis: false,
+      sadakat_sistemi: true,
+      whatsapp_entegrasyon: false
+    },
+    limit: {
+      masa: 999,
+      urun: 999
+    }
+  },
+  elite: {
+    ad: 'Elite Premium',
+    fiyat: 499,
+    ozellikler: {
+      garson_panel: true,
+      kasa: true,
+      qr_menu: true,
+      rapor: true,
+      ai_analiz: true,
+      rezervasyon: true,
+      stok: true,
+      gider: true,
+      musteriler: true,
+      indirimler: true,
+      sinirsiz_masa: true,
+      sinirsiz_urun: true,
+      ai_sesli_siparis: true,
+      sadakat_sistemi: true,
+      whatsapp_entegrasyon: true
     },
     limit: {
       masa: 999,
@@ -73,6 +107,4 @@ export const PAKETLER = {
 export function paketKontrol(paketTuru: string, ozellik: string) {
   // Şu an beta: tüm özellikler açık
   return true
-  // Gerçek kontrol (ödeme aktif olduğunda):
-  // return PAKETLER[paketTuru as keyof typeof PAKETLER]?.ozellikler[ozellik as keyof typeof PAKETLER.basit.ozellikler] || false
 }

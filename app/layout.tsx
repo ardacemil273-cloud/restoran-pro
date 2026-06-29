@@ -163,8 +163,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {menuGruplari.map(grup => (
           <div key={grup.id} className="mb-2">
             <button
-              onClick={() => toggleGrup(grup.id)}
-              className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-bold text-zinc-500 uppercase tracking-wider hover:text-zinc-400 transition"
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                toggleGrup(grup.id);
+              }}
+              className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-bold text-zinc-500 uppercase tracking-wider hover:text-zinc-400 transition outline-none"
             >
               <span>{grup.baslik}</span>
               {menuGrupAcik[grup.id]

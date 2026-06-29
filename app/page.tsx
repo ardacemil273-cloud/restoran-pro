@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation'
 import {
   ChefHat, QrCode, BarChart3, Smartphone, Shield, Zap,
   Check, Star, ArrowRight, Menu, X, Users, Package,
-  TrendingUp, Clock, CreditCard, Bell
+  TrendingUp, Clock, CreditCard, Bell, Crown
 } from 'lucide-react'
+import SmartInstallBanner from '@/components/SmartInstallBanner'
 
 export default function LandingPage() {
   const [menuAcik, setMenuAcik] = useState(false)
@@ -100,44 +101,58 @@ export default function LandingPage() {
     },
     {
       ad: 'Big',
-      fiyat: '199₺/ay',
+      fiyat: '149₺/ay',
+      renk: 'border-blue-500',
+      ozellikler: [
+        'Sınırsız Masa',
+        'Sınırsız Ürün',
+        'Garson Paneli',
+        'Kasa & Fiş Yazdırma',
+        'QR Menü',
+        'Stok Takibi',
+        'Müşteri Yönetimi',
+        'Rezervasyon',
+      ],
+      eksik: ['AI Analiz', 'Sadakat Sistemi', 'WhatsApp Entegrasyon'],
+      buton: 'Big Pakete Geç',
+      href: '/register?paket=big',
+      vurgulu: false
+    },
+    {
+      ad: 'Pro',
+      fiyat: '225₺/ay',
       renk: 'border-yellow-500',
       ozellikler: [
         'Sınırsız Masa',
         'Sınırsız Ürün',
-        'Garson Paneli',
         'Kasa & Fiş Yazdırma',
         'QR Menü',
-        'Stok Takibi',
-        'Müşteri Yönetimi',
-        'Rezervasyon',
-        'Gider Takibi',
+        'Stok & Gider Takibi',
+        'Gelişmiş Raporlama',
+        'AI Satış Analizi',
+        'Müşteri Sadakat Sistemi',
       ],
-      eksik: ['AI Analiz', 'Gelişmiş Raporlama'],
-      buton: 'Big Pakete Geç',
-      href: '/register?paket=big',
+      eksik: ['AI Sesli Sipariş', 'WhatsApp Entegrasyon'],
+      buton: 'Pro Pakete Geç',
+      href: '/register?paket=pro',
       vurgulu: true
     },
     {
-      ad: 'Pro',
-      fiyat: '399₺/ay',
+      ad: 'Elite Premium',
+      fiyat: '499₺/ay',
       renk: 'border-purple-500',
       ozellikler: [
-        'Sınırsız Masa',
-        'Sınırsız Ürün',
-        'Garson Paneli',
-        'Kasa & Fiş Yazdırma',
-        'QR Menü',
-        'Stok Takibi',
-        'Müşteri Yönetimi',
-        'Rezervasyon',
-        'Gider Takibi',
-        'Gelişmiş Raporlama',
-        'AI Satış Analizi',
+        'Her Şey Dahil',
+        'AI Sesli Sipariş',
+        'WhatsApp Sipariş Entegrasyonu',
+        'Öncelikli Destek',
+        'Özel Tema Tasarımı',
+        'Sınırsız Şube Yönetimi',
+        'Gelişmiş Sadakat Oyunları',
       ],
       eksik: [],
-      buton: 'Pro Pakete Geç',
-      href: '/register?paket=pro',
+      buton: 'Elite Pakete Geç',
+      href: '/register?paket=elite',
       vurgulu: false
     }
   ]
@@ -165,6 +180,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-zinc-900 text-white">
+      <SmartInstallBanner />
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-zinc-900/95 backdrop-blur border-b border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -304,38 +320,45 @@ export default function LandingPage() {
               Gizli ücret yok. İstediğiniz zaman iptal edin.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 items-center">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {paketler.map((paket, i) => (
               <div
                 key={i}
-                className={`relative bg-zinc-800 border-2 ${paket.renk} rounded-xl p-6 ${paket.vurgulu ? 'md:scale-105 shadow-2xl shadow-yellow-500/20' : ''}`}
+                className={`relative bg-zinc-800 border-2 ${paket.renk} rounded-xl p-6 flex flex-col ${paket.vurgulu ? 'lg:scale-105 shadow-2xl shadow-yellow-500/20 z-10' : ''}`}
               >
                 {paket.vurgulu && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-xs font-black px-4 py-1 rounded-full">
                     EN POPÜLER
                   </div>
                 )}
+                {paket.ad === 'Elite Premium' && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs font-black px-4 py-1 rounded-full flex items-center gap-1">
+                    <Crown className="w-3 h-3" /> EN KAPSAMLI
+                  </div>
+                )}
                 <h3 className="text-2xl font-black mb-1">{paket.ad}</h3>
                 <p className="text-3xl font-black text-yellow-500 mb-6">{paket.fiyat}</p>
-                <div className="space-y-2 mb-6">
+                <div className="space-y-2 mb-6 flex-grow">
                   {paket.ozellikler.map((o, j) => (
-                    <div key={j} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-green-500 shrink-0" />
+                    <div key={j} className="flex items-start gap-2 text-sm">
+                      <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
                       <span>{o}</span>
                     </div>
                   ))}
                   {paket.eksik.map((o, j) => (
-                    <div key={j} className="flex items-center gap-2 text-sm text-zinc-500">
-                      <X className="w-4 h-4 shrink-0" />
+                    <div key={j} className="flex items-start gap-2 text-sm text-zinc-500">
+                      <X className="w-4 h-4 shrink-0 mt-0.5" />
                       <span>{o}</span>
                     </div>
                   ))}
                 </div>
                 <Link
                   href={paket.href}
-                  className={`block w-full text-center font-bold py-3 rounded-lg transition ${
+                  className={`block w-full text-center font-bold py-3 rounded-lg transition mt-auto ${
                     paket.vurgulu
                       ? 'bg-yellow-500 text-black hover:bg-yellow-400'
+                      : paket.ad === 'Elite Premium'
+                      ? 'bg-purple-600 text-white hover:bg-purple-500'
                       : 'border border-zinc-600 text-zinc-300 hover:bg-zinc-700'
                   }`}
                 >
