@@ -78,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         { ad: 'Masalar', path: '/masalar', icon: ChefHat },
         { ad: 'Masa Haritası', path: '/masa-harita', icon: MapPin },
         { ad: 'Siparişler', path: '/siparisler', icon: ShoppingCart },
+        { ad: 'Mutfak Ekranı', path: '/mutfak-ekrani', icon: UtensilsCrossed },
         { ad: 'Kasa', path: '/kasa', icon: DollarSign },
         { ad: 'Gelen Aramalar', path: '/aramalar', icon: Phone },
       ]
