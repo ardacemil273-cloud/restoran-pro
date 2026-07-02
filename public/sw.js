@@ -73,8 +73,8 @@ self.addEventListener('push', event => {
   let notificationData = {
     title: 'Restoran Pro',
     body: 'Yeni sipariş geldi!',
-    icon: '/icon-192x192.png',
-    badge: '/icon-192x192.png',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-192x192.png',
     tag: 'order-notification',
     requireInteraction: true,
     vibrate: [200, 100, 200]

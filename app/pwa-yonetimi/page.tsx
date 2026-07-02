@@ -1,7 +1,7 @@
 'use client'
 import { motion } from 'framer-motion'
 import PageHeader from '@/components/PageHeader'
-import { Download, Smartphone, Apple, Chrome, RefreshCw } from 'lucide-react'
+import { Download, Smartphone, Apple, Globe2, RefreshCw } from 'lucide-react'
 
 export default function PWAYonetimiPage() {
   return (
@@ -50,7 +50,7 @@ export default function PWAYonetimiPage() {
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-green-500/20 rounded-xl">
-              <Chrome className="w-6 h-6 text-green-400" />
+              <Globe2 className="w-6 h-6 text-green-400" />
             </div>
             <h2 className="text-2xl font-black text-white">Android Kurulum</h2>
           </div>

@@ -193,21 +193,8 @@
     }
   }
 
-  /* Safe Area Desteği */
-  body {
-    padding-left: max(12px, env(safe-area-inset-left));
-    padding-right: max(12px, env(safe-area-inset-right));
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  /* Notch Desteği (iPhone X+) */
-  @supports (padding: max(0px)) {
-    body {
-      padding-left: max(12px, env(safe-area-inset-left));
-      padding-right: max(12px, env(safe-area-inset-right));
-    }
-  }
+  /* Safe Area Desteği - Sadece PWA standalone modunda */
+  /* body padding yerine utility class kullanınız */
 }
 
 /* PWA Standalone Modu */
@@ -321,6 +308,26 @@ input::placeholder, textarea::placeholder {
   background: rgba(113, 113, 122, 0.8);
 }
 
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(113, 113, 122, 0.4);
+  border-radius: 2px;
+}
+
+/* Safe Area Utilities */
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
 
 /* Enhanced Mobile Accessibility */
 @media (max-width: 768px) {

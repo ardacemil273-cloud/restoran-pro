@@ -59,7 +59,7 @@ export default function SiparislerPage() {
         const { data: restoran } = await supabase
           .from('restoranlar')
           .select('id')
-          .eq('user_id', user.id)
+          .eq('sahibi_id', user.id)
           .single()
         if (restoran) setRestoranId(restoran.id)
       } catch (error) {
@@ -92,12 +92,30 @@ export default function SiparislerPage() {
 
   const updateDurum = async (id: string, durum: string) => {
     try {
+      const updateData: Record<string, unknown> = { durum }
+      if (durum === 'tamamlandi' || durum === 'odendi') {
+        updateData.tamamlanma_tarihi = new Date().toISOString()
+      }
       const { error } = await supabase
         .from('siparisler')
-        .update({ durum })
+        .update(updateData)
         .eq('id', id)
 
       if (error) throw error
+
+      // Sipariş tamamlandığında stok düşür
+      if ((durum === 'tamamlandi' || durum === 'odendi') && restoranId) {
+        try {
+          await fetch('/api/siparis/stok-guncelle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ siparis_id: id, restoran_id: restoranId })
+          })
+        } catch (e) {
+          console.error('Stok güncelleme hatası:', e)
+        }
+      }
+
       toast.success('Sipariş durumu güncellendi')
       fetchSiparisler()
     } catch (err) {

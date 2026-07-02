@@ -7,7 +7,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import axios from 'axios'
 
 export async function POST(request: NextRequest) {
   try {
@@ -82,15 +81,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Webhook'u gönder
-    const response = await axios.post(webhookUrl, payload, {
-      headers: { 'Content-Type': 'application/json' }
+    const fetchResponse = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     })
+    const responseData = await fetchResponse.json()
 
     return NextResponse.json({
       success: true,
       message: `${action} webhook'u gönderildi`,
       payload: payload,
-      response: response.data
+      response: responseData
     }, { status: 200 })
   } catch (error: any) {
     console.error('Webhook simulator hatası:', error)

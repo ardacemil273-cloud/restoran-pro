@@ -40,7 +40,7 @@ export default function ZRaporuPage() {
       const { data: restoranData } = await supabase
         .from('restoranlar')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('sahibi_id', user.id)
         .single()
 
       if (!restoranData) return

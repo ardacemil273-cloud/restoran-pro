@@ -196,11 +196,37 @@ export default function KasaPage() {
   async function masaKapat(masaId: string, masaAd: string, toplamTutar: number) {
     if (!confirm(`${masaAd} kapatılsın mı? Toplam: ${toplamTutar.toFixed(2)}₺`)) return
 
-    await supabase
+    // Ödenmemiş siparışleri getir
+    const { data: aktifSiparisler } = await supabase
       .from('siparisler')
-      .update({ durum: 'odendi' })
+      .select('id')
       .eq('masa_id', masaId)
       .in('durum', ['hazirlaniyor', 'hazir', 'tamamlandi'])
+
+    // Siparışleri ödendi olarak işaretle
+    await supabase
+      .from('siparisler')
+      .update({ durum: 'odendi', tamamlanma_tarihi: new Date().toISOString() })
+      .eq('masa_id', masaId)
+      .in('durum', ['hazirlaniyor', 'hazir', 'tamamlandi'])
+
+    // Stok güncelleme - her siparış için
+    if (aktifSiparisler && aktifSiparisler.length > 0 && restoran?.id) {
+      for (const siparis of aktifSiparisler) {
+        try {
+          await fetch('/api/siparis/stok-guncelle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              siparis_id: siparis.id,
+              restoran_id: restoran.id
+            })
+          })
+        } catch (e) {
+          console.error('Stok güncelleme hatası:', e)
+        }
+      }
+    }
 
     await supabase
       .from('masalar')

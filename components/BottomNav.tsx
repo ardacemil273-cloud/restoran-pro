@@ -26,7 +26,7 @@ export default function BottomNav() {
   const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Ana Sayfa', icon: <Home className="w-5 h-5" />, href: '/dashboard' },
     { id: 'siparisler', label: 'Siparişler', icon: <Package className="w-5 h-5" />, href: '/siparisler' },
-    { id: 'menu', label: 'Menü', icon: <UtensilsCrossed className="w-5 h-5" />, href: '/menu' },
+    { id: 'masalar', label: 'Masalar', icon: <UtensilsCrossed className="w-5 h-5" />, href: '/masalar' },
     { id: 'aramalar', label: 'Aramalar', icon: <Phone className="w-5 h-5" />, href: '/aramalar' },
     { id: 'ayarlar', label: 'Ayarlar', icon: <Settings className="w-5 h-5" />, href: '/ayarlar' },
   ]

@@ -29,11 +29,17 @@ export default function GarsonYonetimiPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showPin, setShowPin] = useState<{ [key: string]: boolean }>({})
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    ad: string
+    telefon: string
+    email: string
+    rol: 'garson' | 'mutfak' | 'kurye' | 'admin'
+    pin_kodu: string
+  }>({
     ad: '',
     telefon: '',
     email: '',
-    rol: 'garson' as const,
+    rol: 'garson',
     pin_kodu: ''
   })
 
@@ -49,7 +55,7 @@ export default function GarsonYonetimiPage() {
       const { data: restoranData } = await supabase
         .from('restoranlar')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('sahibi_id', user.id)
         .single()
       setRestoran(restoranData)
 

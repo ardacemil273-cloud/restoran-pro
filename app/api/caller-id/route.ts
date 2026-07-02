@@ -140,14 +140,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Real-time bildirim gönder (Supabase Realtime)
-    // Garsonlar/çalışanlar bunu dinleyebilir
-    await supabase
-      .from('arama_kayitlari')
-      .on('INSERT', payload => {
-        console.log('Yeni arama:', payload)
-      })
-      .subscribe()
+    // Not: Realtime dinleme server-side route'da yapılmaz, client-side'da yapılır
 
     return NextResponse.json({
       success: true,

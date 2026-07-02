@@ -7,7 +7,6 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import axios from 'axios'
 
 const YEMEKSEPETI_API_URL = 'https://yemeksepeti.partner.deliveryhero.io'
 
@@ -38,25 +37,25 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdmin()
 
     // Token'ı Yemeksepeti'den al
-    const tokenResponse = await axios.post(
+    const tokenFetchResponse = await fetch(
       `${YEMEKSEPETI_API_URL}/v2/oauth/token`,
-      new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: client_id,
-        client_secret: client_secret
-      }),
       {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          grant_type: 'client_credentials',
+          client_id: client_id,
+          client_secret: client_secret
+        })
       }
     )
+    const tokenResponseData = await tokenFetchResponse.json()
 
-    const { access_token, expires_in } = tokenResponse.data
+    const { access_token, expires_in } = tokenResponseData
 
     if (!access_token) {
       return NextResponse.json(
-        { error: 'Token alınamadı', details: tokenResponse.data },
+        { error: 'Token alınamadı', details: tokenResponseData },
         { status: 400 }
       )
     }
@@ -92,7 +91,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Token alınamadı',
-        details: error.response?.data || error.message
+        details: error.message
       },
       { status: 500 }
     )
