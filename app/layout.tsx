@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { Toaster } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import PwaInstall from '@/components/PwaInstall'
+import BottomNav from '@/components/BottomNav'
+import IncomingCallNotification from '@/components/IncomingCallNotification'
 import {
   LayoutDashboard, Layers, MapPin, ShoppingCart, ChefHat, Mic, Wallet,
   Package, Truck, CalendarDays, ListChecks, Warehouse, Users, Gamepad2,
@@ -238,7 +240,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             {/* Main Content Area */}
-            <main className="flex-1 relative overflow-y-auto pt-16 lg:pt-0 bg-background custom-scrollbar pb-32 lg:pb-0 safe-area-inset-bottom">
+            <main className="flex-1 relative overflow-y-auto pt-16 lg:pt-0 bg-background custom-scrollbar pb-24 lg:pb-0 safe-area-inset-bottom">
               {children}
             </main>
           </div>
@@ -324,8 +326,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-
+                </div>
+        {/* Bottom Navigation (Mobile) */}
+        <BottomNav />
+        {/* Incoming Call Notification */}
+        <IncomingCallNotification />
         <Toaster position="bottom-center" />
         <PwaInstall />
       </body>
