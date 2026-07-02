@@ -63,7 +63,13 @@ function NavGroup({ label, id, children }: any) {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [mobilMenuAcik, setMobilMenuAcik] = useState(false)
+  const [yemeksepetiAcik, setYemeksepetiAcik] = useState(true)
   const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    const state = localStorage.getItem('nav_yemeksepeti_open')
+    if (state !== null) setYemeksepetiAcik(state === 'true')
+  }, [])
   const router = useRouter()
 
   useEffect(() => {
@@ -158,7 +164,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <div className="space-y-1">
                   <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
                   <NavItem href="/tek-panel" icon={Layers} label="Tek Panel" badge="Yemek+Getir" color="text-orange-400" />
-                  <NavItem href="/yemeksepeti-siparisler" icon={Package} label="Yemeksepeti" badge="Yeni" color="text-pink-400" />
+                  {yemeksepetiAcik && (
+                    <NavItem href="/yemeksepeti-siparisler" icon={Package} label="Yemeksepeti" badge="Yeni" color="text-pink-400" />
+                  )}
                 </div>
 
                 <NavGroup label="Garson Paneli" id="garson">

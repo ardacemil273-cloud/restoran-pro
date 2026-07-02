@@ -35,6 +35,16 @@ export default function PwaInstall() {
 
     // localStorage'dan kontrol et
     const wasShown = localStorage.getItem('pwa_shown')
+    const lastShownTime = localStorage.getItem('pwa_shown_time')
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000
+    const isExpired = lastShownTime && (Date.now() - parseInt(lastShownTime) > thirtyDays)
+
+    const resetPwaFlag = () => {
+      localStorage.removeItem('pwa_shown')
+      localStorage.removeItem('pwa_shown_time')
+    }
+
+    if (isExpired) resetPwaFlag()
     
     // beforeinstallprompt event'ini yakala
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -43,9 +53,10 @@ export default function PwaInstall() {
       setDeferredPrompt(event)
       
       // Hemen göster
-      if (!wasShown) {
+      if (!wasShown || isExpired) {
         setShowPrompt(true)
         localStorage.setItem('pwa_shown', 'true')
+        localStorage.setItem('pwa_shown_time', Date.now().toString())
       }
     }
 
@@ -67,9 +78,10 @@ export default function PwaInstall() {
 
     // Fallback: eğer 3 saniye sonra prompt gelmezse manual göster
     const fallbackTimer = setTimeout(() => {
-      if (!deferredPrompt && !isStandalone && !wasShown) {
+      if (!deferredPrompt && !isStandalone && (!wasShown || isExpired)) {
         setShowManualFallback(true)
         localStorage.setItem('pwa_shown', 'true')
+        localStorage.setItem('pwa_shown_time', Date.now().toString())
       }
     }, 3000)
 
