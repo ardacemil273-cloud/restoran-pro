@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
+import PageHeader from '@/components/PageHeader'
 import {
   Bell, Check, Clock, Truck, Volume2, Printer,
   Trash2, ChefHat, Receipt, RefreshCw, AlertCircle, Timer, Package, Eye,
@@ -238,38 +239,36 @@ export default function SiparislerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl lg:text-4xl font-black text-white flex items-center gap-3">
-              <Receipt className="w-8 h-8 text-primary" />
-              Siparişler
-            </h1>
-            <p className="text-white/40 mt-2">Aktif sipariş yönetimi ve takibi</p>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Webhook Butonu */}
-            <button
-              onClick={webhookModalAc}
-              className="flex items-center gap-2 px-4 py-2.5 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 hover:border-violet-500/60 text-violet-300 rounded-xl font-bold text-sm transition-all"
-              title="Webhook Ayarları"
-            >
-              <Webhook className="w-4 h-4" />
-              <span className="hidden sm:inline">Webhook</span>
-              {webhookAktif && (
-                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              )}
-            </button>
-            {/* Yenile Butonu */}
-            <button
-              onClick={fetchSiparisler}
-              className="p-3 bg-primary/10 hover:bg-primary/20 rounded-xl transition-all text-primary"
-            >
-              <RefreshCw className="w-5 h-5" />
-            </button>
-          </div>
+    <div className="min-h-screen bg-background">
+      {/* Page Header */}
+      <PageHeader
+        title="Siparişler"
+        subtitle="Aktif sipariş yönetimi ve takibi"
+        icon={<Receipt className="w-6 h-6" />}
+      />
+
+      <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+        {/* Actions */}
+        <div className="flex items-center gap-2 mb-8">
+          {/* Webhook Butonu */}
+          <button
+            onClick={webhookModalAc}
+            className="flex items-center gap-2 px-4 py-2.5 bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 hover:border-violet-500/60 text-violet-300 rounded-xl font-bold text-sm transition-all"
+            title="Webhook Ayarları"
+          >
+            <Webhook className="w-4 h-4" />
+            <span className="hidden sm:inline">Webhook</span>
+            {webhookAktif && (
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            )}
+          </button>
+          {/* Yenile Butonu */}
+          <button
+            onClick={fetchSiparisler}
+            className="p-3 bg-primary/10 hover:bg-primary/20 rounded-xl transition-all text-primary"
+          >
+            <RefreshCw className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Filter Tabs */}
