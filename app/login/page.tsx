@@ -1,126 +1,136 @@
 'use client'
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
-import { UtensilsCrossed, ArrowRight, ShieldCheck, Zap, BarChart3, Star } from 'lucide-react'
-import { toast } from 'sonner'
-import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ChefHat, Lock, ArrowRight, LogIn } from 'lucide-react'
+import AdminLogin from '@/components/AdminLogin'
+import PersonelLogin from '@/components/PersonelLogin'
+
+type LoginMode = 'select' | 'admin' | 'personel'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      toast.error('Giriş başarısız: ' + error.message)
-      setLoading(false)
-    } else {
-      toast.success('Giriş başarılı! Yönlendiriliyorsunuz...')
-      router.push('/dashboard')
-    }
-  }
+  const [mode, setMode] = useState<LoginMode>('select')
 
   return (
-    <div className="min-h-screen flex bg-background selection:bg-primary/30">
-      {/* Sol Panel - Branding & Info */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12 bg-card border-r border-white/5">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.05),transparent)] pointer-events-none" />
-        
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/20 rotate-3">
-              <UtensilsCrossed className="w-7 h-7 text-black" />
-            </div>
-            <h1 className="text-2xl font-black tracking-tighter text-white uppercase">Restoran <span className="text-primary">Pro</span></h1>
-          </div>
-          
-          <div className="space-y-8">
-            <h2 className="text-5xl font-black text-white leading-[1.1] tracking-tight">
-              Restoranınızı <br />
-              <span className="text-primary">Dijitalleştirin.</span>
-            </h2>
-            <p className="text-xl text-white/50 max-w-md leading-relaxed">
-              QR menü, garson paneli, kasa, stok takibi ve yapay zeka analizli tek platformda restoranınızı yönetin.
-            </p>
-          </div>
-        </div>
-
-        <div className="relative z-10 grid grid-cols-2 gap-6">
-          <div className="p-6 rounded-3xl bg-white/5 border border-white/5 backdrop-blur-sm">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-              <Zap className="w-5 h-5 text-primary" />
-            </div>
-            <h3 className="text-white font-bold mb-1">Hızlı Sipariş</h3>
-            <p className="text-xs text-white/40">Saniyeler içinde sipariş al ve mutfağa ilet.</p>
-          </div>
-          <div className="p-6 rounded-3xl bg-white/5 border border-white/5 backdrop-blur-sm">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-              <BarChart3 className="w-5 h-5 text-primary" />
-            </div>
-            <h3 className="text-white font-bold mb-1">AI Analiz</h3>
-            <p className="text-xs text-white/40">Satış verilerini yapay zeka ile analiz et.</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 flex items-center justify-center p-4">
+      {/* Background Decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
       </div>
 
-      {/* Sağ Panel - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 relative">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center lg:text-left space-y-2">
-            <h3 className="text-3xl font-black text-white tracking-tight">Hoş Geldiniz</h3>
-            <p className="text-white/50 font-medium">Hesabınıza giriş yapın</p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-white/40 uppercase tracking-widest ml-1">E-posta Adresi</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ornek@restoran.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center px-1">
-                  <label className="text-xs font-bold text-white/40 uppercase tracking-widest">Şifre</label>
-                  <Link href="/sifremi-unuttum" className="text-xs font-bold text-primary hover:text-primary/80 transition-colors">Şifremi Unuttum</Link>
-                </div>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                  required
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-black font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+      {/* Content */}
+      <div className="relative w-full max-w-md">
+        <AnimatePresence mode="wait">
+          {/* Seçici Ekran */}
+          {mode === 'select' && (
+            <motion.div
+              key="select"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
             >
-              {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
-              {!loading && <ArrowRight size={20} />}
-            </button>
-          </form>
+              {/* Logo ve Başlık */}
+              <div className="text-center mb-8">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 mb-4"
+                >
+                  <ChefHat className="w-8 h-8 text-white" />
+                </motion.div>
+                <h1 className="text-3xl font-black text-white mb-2">Restoran Pro</h1>
+                <p className="text-white/60">Giriş Türünü Seç</p>
+              </div>
 
-          <div className="text-center">
-            <p className="text-white/40 font-medium">
-              Hesabınız yok mu? <Link href="/register" className="text-primary font-bold hover:underline">Ücretsiz Kayıt Olun</Link>
-            </p>
-          </div>
-        </div>
+              {/* Giriş Seçenekleri */}
+              <div className="space-y-4">
+                {/* Yönetici Girişi */}
+                <motion.button
+                  onClick={() => setMode('admin')}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full group relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 hover:border-primary/50 p-6 transition-all duration-300"
+                >
+                  {/* Hover Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-primary/20 rounded-xl group-hover:bg-primary/30 transition-all">
+                        <Lock className="w-6 h-6 text-primary" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-black text-white text-lg">Yönetici Girişi</h3>
+                        <p className="text-sm text-white/60">E-posta ve şifre ile giriş</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                  </div>
+                </motion.button>
+
+                {/* Personel Girişi */}
+                <motion.button
+                  onClick={() => setMode('personel')}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full group relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-900/20 to-cyan-900/10 border border-cyan-500/30 hover:border-cyan-400/50 p-6 transition-all duration-300"
+                >
+                  {/* Hover Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/10 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-cyan-500/20 rounded-xl group-hover:bg-cyan-500/30 transition-all">
+                        <LogIn className="w-6 h-6 text-cyan-400" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-black text-white text-lg">Personel Girişi</h3>
+                        <p className="text-sm text-white/60">4 haneli PIN kodu ile giriş</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+                  </div>
+                </motion.button>
+              </div>
+
+              {/* Footer */}
+              <div className="text-center pt-6 border-t border-white/10">
+                <p className="text-sm text-white/60">
+                  Restoran Pro © 2026 - Tüm Hakları Saklıdır
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Yönetici Girişi */}
+          {mode === 'admin' && (
+            <motion.div
+              key="admin"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AdminLogin onBack={() => setMode('select')} />
+            </motion.div>
+          )}
+
+          {/* Personel Girişi */}
+          {mode === 'personel' && (
+            <motion.div
+              key="personel"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <PersonelLogin onBack={() => setMode('select')} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   )
