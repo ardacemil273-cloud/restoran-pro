@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Package, TrendingUp, AlertCircle, RefreshCw, Check, Clock } from 'lucide-react'
+import { Package, TrendingUp, AlertCircle, RefreshCw, Check, Clock, Settings, Copy, Eye, EyeOff, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 
 type YemeksepetiSiparis = {
@@ -21,12 +21,26 @@ export default function YemeksepetiSiparislerPage() {
   const [siparisler, setSiparisler] = useState<YemeksepetiSiparis[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('tum')
+  const [showWebhookInfo, setShowWebhookInfo] = useState(false)
+  const [webhookUrl, setWebhookUrl] = useState('')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url = `${window.location.origin}/api/yemeksepeti/webhook`
+      setWebhookUrl(url)
+    }
     fetchSiparisler()
     const interval = setInterval(fetchSiparisler, 10000) // Her 10 saniyede kontrol et
     return () => clearInterval(interval)
   }, [])
+
+  const copyWebhookUrl = () => {
+    navigator.clipboard.writeText(webhookUrl)
+    setCopied(true)
+    toast.success('Webhook URL kopyalandı!')
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const fetchSiparisler = async () => {
     try {
@@ -76,6 +90,67 @@ export default function YemeksepetiSiparislerPage() {
           >
             <RefreshCw className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* Webhook Info Card */}
+        <div className="bg-gradient-to-r from-pink-500/10 to-orange-500/10 border border-pink-500/20 rounded-xl p-6 mb-8">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-black text-white flex items-center gap-2">
+                <Settings size={20} />
+                Webhook Konfigürasyonu
+              </h2>
+              <p className="text-white/50 text-sm mt-1">Yemeksepeti'nden siparişleri almak için webhook URL'sini kullan</p>
+            </div>
+            <button
+              onClick={() => setShowWebhookInfo(!showWebhookInfo)}
+              className="text-white/40 hover:text-white transition-all"
+            >
+              {showWebhookInfo ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+
+          {showWebhookInfo && (
+            <div className="space-y-3">
+              <div className="bg-black/20 rounded-lg p-4 space-y-2">
+                <p className="text-xs text-white/60 uppercase font-bold">Webhook URL</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-sm text-white/80 break-all font-mono bg-black/40 p-2 rounded">
+                    {webhookUrl}
+                  </code>
+                  <button
+                    onClick={copyWebhookUrl}
+                    className="p-2 bg-pink-500/20 hover:bg-pink-500/30 rounded-lg transition-all"
+                  >
+                    <Copy size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-black/20 rounded-lg p-4 space-y-2">
+                <p className="text-xs text-white/60 uppercase font-bold">Test JSON</p>
+                <pre className="text-xs text-white/70 overflow-x-auto bg-black/40 p-2 rounded">{`{
+  "order_id": "YS-123456",
+  "customer_name": "Test Müşteri",
+  "customer_phone": "+905551234567",
+  "items": [{"name": "Döner", "quantity": 2, "price": 50}],
+  "total_price": 100,
+  "delivery_address": "Test Adresi",
+  "notes": "Test notu"
+}`}</pre>
+              </div>
+
+              <a
+                href="https://www.yemeksepeti.com/api"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-pink-400 hover:text-pink-300 text-sm font-bold transition-all"
+              >
+                Yemeksepeti API Dokümantasyonu
+                <ExternalLink size={16} />
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
