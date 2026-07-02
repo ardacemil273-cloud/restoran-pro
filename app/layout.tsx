@@ -67,6 +67,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter()
 
   useEffect(() => {
+    // Service Worker Kaydı
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(
+          (registration) => {
+            console.log('SW registered: ', registration);
+          },
+          (registrationError) => {
+            console.log('SW registration failed: ', registrationError);
+          }
+        );
+      });
+    }
+
     const checkAuth = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -144,6 +158,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <div className="space-y-1">
                   <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
                   <NavItem href="/tek-panel" icon={Layers} label="Tek Panel" badge="Yemek+Getir" color="text-orange-400" />
+                  <NavItem href="/yemeksepeti-siparisler" icon={Package} label="Yemeksepeti" badge="Yeni" color="text-pink-400" />
                 </div>
 
                 <NavGroup label="Garson Paneli" id="garson">
@@ -244,6 +259,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <div className="space-y-1">
                       <NavItem href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
                       <NavItem href="/tek-panel" icon={Layers} label="Tek Panel" badge="Yemek+Getir" color="text-orange-400" />
+                      <NavItem href="/yemeksepeti-siparisler" icon={Package} label="Yemeksepeti" badge="Yeni" color="text-pink-400" />
                     </div>
 
                     <NavGroup label="Garson Paneli" id="garson-mobile">
