@@ -33,8 +33,9 @@ export default function RegisterPage() {
     if (data.user) {
       const { error: restoranError } = await supabase.from('restoranlar').insert([{
         ad: restoranAd,
-        user_id: data.user.id,
+        sahibi_id: data.user.id,
         slug: restoranAd.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        patron_sifre: '1234',
       }])
       if (restoranError) console.error('Restoran oluşturma hatası:', restoranError)
     }
