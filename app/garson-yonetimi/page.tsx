@@ -17,6 +17,8 @@ interface Garson {
   rol: 'garson' | 'mutfak' | 'kurye' | 'admin'
   pin_kodu: string
   pin_aktif: boolean
+  sifre: string | null
+  sifre_aktif: boolean
   aktif: boolean
   created_at: string
 }
@@ -35,12 +37,16 @@ export default function GarsonYonetimiPage() {
     email: string
     rol: 'garson' | 'mutfak' | 'kurye' | 'admin'
     pin_kodu: string
+    sifre: string
+    sifre_aktif: boolean
   }>({
     ad: '',
     telefon: '',
     email: '',
     rol: 'garson',
-    pin_kodu: ''
+    pin_kodu: '',
+    sifre: '',
+    sifre_aktif: false
   })
 
   useEffect(() => {
@@ -52,11 +58,25 @@ export default function GarsonYonetimiPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return router.push('/login')
 
-      const { data: restoranData } = await supabase
+      // Önce user_id ile ara (yeni kayıtlar için)
+      let restoranData = null
+      const { data: restoranByUserId } = await supabase
         .from('restoranlar')
         .select('*')
-        .eq('sahibi_id', user.id)
-        .single()
+        .eq('user_id', user.id)
+        .maybeSingle()
+      
+      if (restoranByUserId) {
+        restoranData = restoranByUserId
+      } else {
+        // Eğer user_id ile bulunamadıysa, sahibi_id ile ara (eski kayıtlar için)
+        const { data: restoranBySahibiId } = await supabase
+          .from('restoranlar')
+          .select('*')
+          .eq('sahibi_id', user.id)
+          .maybeSingle()
+        restoranData = restoranBySahibiId
+      }
       setRestoran(restoranData)
 
       const { data: garsonlarData } = await supabase
@@ -86,6 +106,16 @@ export default function GarsonYonetimiPage() {
       return
     }
 
+    if (formData.sifre_aktif && !formData.sifre) {
+      toast.error('Şifre aktifse şifre belirtmelisiniz')
+      return
+    }
+
+    if (formData.sifre && formData.sifre.length < 4) {
+      toast.error('Şifre en az 4 karakter olmalı')
+      return
+    }
+
     if (formData.pin_kodu.length !== 4 || !/^\d{4}$/.test(formData.pin_kodu)) {
       toast.error('PIN kodu 4 haneli sayı olmalı')
       return
@@ -101,7 +131,9 @@ export default function GarsonYonetimiPage() {
             telefon: formData.telefon,
             email: formData.email,
             rol: formData.rol,
-            pin_kodu: formData.pin_kodu
+            pin_kodu: formData.pin_kodu,
+            sifre: formData.sifre || null,
+            sifre_aktif: formData.sifre_aktif
           })
           .eq('id', editingId)
 
@@ -119,7 +151,9 @@ export default function GarsonYonetimiPage() {
             rol: formData.rol,
             pin_kodu: formData.pin_kodu,
             pin_aktif: true,
-            aktif: true
+            aktif: true,
+            sifre: formData.sifre || null,
+            sifre_aktif: formData.sifre_aktif
           })
 
         if (error) throw error
@@ -128,7 +162,7 @@ export default function GarsonYonetimiPage() {
 
       setShowModal(false)
       setEditingId(null)
-      setFormData({ ad: '', telefon: '', email: '', rol: 'garson', pin_kodu: '' })
+      setFormData({ ad: '', telefon: '', email: '', rol: 'garson', pin_kodu: '', sifre: '', sifre_aktif: false })
       loadData()
     } catch (err: any) {
       console.error('İşlem hatası:', err)
@@ -142,7 +176,9 @@ export default function GarsonYonetimiPage() {
       telefon: garson.telefon,
       email: garson.email,
       rol: garson.rol,
-      pin_kodu: garson.pin_kodu
+      pin_kodu: garson.pin_kodu,
+      sifre: garson.sifre || '',
+      sifre_aktif: garson.sifre_aktif || false
     })
     setEditingId(garson.id)
     setShowModal(true)
@@ -213,7 +249,7 @@ export default function GarsonYonetimiPage() {
         <motion.button
           onClick={() => {
             setEditingId(null)
-            setFormData({ ad: '', telefon: '', email: '', rol: 'garson', pin_kodu: '' })
+            setFormData({ ad: '', telefon: '', email: '', rol: 'garson', pin_kodu: '', sifre: '', sifre_aktif: false })
             setShowModal(true)
           }}
           whileHover={{ scale: 1.05 }}
@@ -440,6 +476,36 @@ export default function GarsonYonetimiPage() {
                     required
                   />
                   <p className="text-xs text-white/50 mt-1">4 haneli sayı (0000-9999)</p>
+                </div>
+
+                {/* Şifre Sistemi */}
+                <div className="border-t border-white/10 pt-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <input
+                      type="checkbox"
+                      id="sifre_aktif"
+                      checked={formData.sifre_aktif}
+                      onChange={e => setFormData({ ...formData, sifre_aktif: e.target.checked })}
+                      className="w-4 h-4 rounded"
+                    />
+                    <label htmlFor="sifre_aktif" className="text-sm font-bold text-white/70">
+                      Şifre ile Giriş Aktif Et
+                    </label>
+                  </div>
+                  
+                  {formData.sifre_aktif && (
+                    <div>
+                      <label className="block text-sm font-bold text-white/70 mb-2">Garson Şifresi</label>
+                      <input
+                        type="password"
+                        value={formData.sifre}
+                        onChange={e => setFormData({ ...formData, sifre: e.target.value })}
+                        placeholder="Garson şifresini girin"
+                        className="w-full px-4 py-2 rounded-xl bg-zinc-800/50 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                      <p className="text-xs text-white/50 mt-1">En az 4 karakter (örn: 2123)</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Butonlar */}

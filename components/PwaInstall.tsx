@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Download, X, Smartphone } from 'lucide-react'
+import { Download, X, Smartphone, Apple, Globe } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 
@@ -13,14 +13,18 @@ export default function PwaInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
+  const [isAndroid, setIsAndroid] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
   const [isInstalling, setIsInstalling] = useState(false)
-  const [showManualFallback, setShowManualFallback] = useState(false)
 
   useEffect(() => {
-    // iOS kontrolü
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    // Cihaz tipi kontrolü
+    const userAgent = navigator.userAgent.toLowerCase()
+    const isIOSDevice = /iphone|ipad|ipod/.test(userAgent)
+    const isAndroidDevice = /android/.test(userAgent)
+    
     setIsIOS(isIOSDevice)
+    setIsAndroid(isAndroidDevice)
 
     // Standalone mode kontrolü
     const isStandalone = 
@@ -36,8 +40,8 @@ export default function PwaInstall() {
     // localStorage'dan kontrol et
     const wasShown = localStorage.getItem('pwa_shown')
     const lastShownTime = localStorage.getItem('pwa_shown_time')
-    const thirtyDays = 30 * 24 * 60 * 60 * 1000
-    const isExpired = lastShownTime && (Date.now() - parseInt(lastShownTime) > thirtyDays)
+    const threeDays = 3 * 24 * 60 * 60 * 1000 // 3 gün (7'den 3'e düşürdük)
+    const isExpired = lastShownTime && (Date.now() - parseInt(lastShownTime) > threeDays)
 
     const resetPwaFlag = () => {
       localStorage.removeItem('pwa_shown')
@@ -46,27 +50,24 @@ export default function PwaInstall() {
 
     if (isExpired) resetPwaFlag()
     
-    // beforeinstallprompt event'ini yakala
+    // beforeinstallprompt event'ini yakala (Android Chrome)
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
       const event = e as BeforeInstallPromptEvent
       setDeferredPrompt(event)
+      console.log('[PWA] beforeinstallprompt event received')
       
-      // Hemen göster
-      if (!wasShown || isExpired) {
-        setShowPrompt(true)
-        localStorage.setItem('pwa_shown', 'true')
-        localStorage.setItem('pwa_shown_time', Date.now().toString())
-      }
+      // Hemen göster (agresif gösterim - her zaman)
+      setShowPrompt(true)
+      localStorage.setItem('pwa_shown', 'true')
+      localStorage.setItem('pwa_shown_time', Date.now().toString())
     }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
 
     // App yükleme başarılı oldu mu
     const handleAppInstalled = () => {
+      console.log('[PWA] App installed successfully')
       setIsInstalled(true)
       setShowPrompt(false)
-      setShowManualFallback(false)
       setIsInstalling(false)
       setDeferredPrompt(null)
       localStorage.setItem('pwa_installed', 'true')
@@ -74,193 +75,155 @@ export default function PwaInstall() {
       toast.success('✅ Uygulama başarıyla yüklendi!')
     }
 
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
     window.addEventListener('appinstalled', handleAppInstalled)
 
-    // Fallback: eğer 3 saniye sonra prompt gelmezse manual göster
+    // Fallback: eğer prompt gelmezse ve mobil ise HEMEN manual göster (agresif)
     const fallbackTimer = setTimeout(() => {
-      if (!deferredPrompt && !isStandalone && (!wasShown || isExpired)) {
-        setShowManualFallback(true)
+      if (!isInstalled && (isIOSDevice || isAndroidDevice)) {
+        console.log('[PWA] Showing fallback prompt (no beforeinstallprompt received)')
+        setShowPrompt(true)
         localStorage.setItem('pwa_shown', 'true')
         localStorage.setItem('pwa_shown_time', Date.now().toString())
       }
-    }, 3000)
+    }, 2000) // 5000ms'den 2000ms'ye düşürdük - daha hızlı göster
 
     return () => {
+      clearTimeout(fallbackTimer)
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
-      clearTimeout(fallbackTimer)
     }
-  }, [deferredPrompt])
+  }, [])
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return
+    if (!deferredPrompt) {
+      toast.error('Kurulum seçeneği şu anda kullanılamıyor')
+      return
+    }
 
     setIsInstalling(true)
-    
     try {
-      // Timeout ekle - 10 saniye sonra hata ver
-      const installPromise = new Promise<void>(async (resolve, reject) => {
-        try {
-          await deferredPrompt.prompt()
-          const { outcome } = await deferredPrompt.userChoice
-
-          if (outcome === 'accepted') {
-            resolve()
-          } else {
-            reject(new Error('User dismissed the install prompt'))
-          }
-        } catch (err) {
-          reject(err)
-        }
-      })
-
-      const timeoutPromise = new Promise<void>((_, reject) => {
-        setTimeout(() => reject(new Error('Install prompt timeout')), 10000)
-      })
-
-      await Promise.race([installPromise, timeoutPromise])
+      await deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
       
-      toast.success('✅ Uygulama yükleniyor...')
+      if (outcome === 'accepted') {
+        toast.success('✅ Uygulama kurulumu başlatıldı!')
+      } else {
+        toast.info('Kurulum iptal edildi')
+      }
+      
       setDeferredPrompt(null)
-      setShowPrompt(false)
-      localStorage.setItem('pwa_installed', 'true')
-    } catch (err) {
-      console.error('Install error:', err)
-      toast.error('Yükleme başarısız oldu. Lütfen tekrar deneyin.')
+    } catch (error) {
+      toast.error('Kurulum sırasında hata oluştu')
+      console.error('Install error:', error)
+    } finally {
       setIsInstalling(false)
+      setShowPrompt(false)
     }
   }
 
+  const handleDismiss = () => {
+    setShowPrompt(false)
+  }
+
+  // Eğer zaten yüklü ise gösterme
   if (isInstalled) return null
 
-  // iOS için özel talimat
-  if (isIOS && (showPrompt || showManualFallback)) {
-    return (
-      <AnimatePresence>
+  return (
+    <AnimatePresence>
+      {showPrompt && (
         <motion.div
           initial={{ opacity: 0, y: 100 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 100 }}
-          className="fixed bottom-6 left-4 right-4 z-[9999]"
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className="fixed bottom-6 right-6 z-50 max-w-sm"
         >
-          <div className="bg-zinc-900/95 border border-white/10 p-5 rounded-3xl shadow-2xl backdrop-blur-2xl">
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <div className="flex items-start gap-3">
-                <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
-                  <Smartphone className="w-6 h-6 text-black" />
+          <div className="glass rounded-2xl p-6 border border-slate-700/50 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
+                  <Smartphone className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-white uppercase">iOS Uygulaması</h3>
-                  <p className="text-xs text-white/50 mt-1">Uygulamayı ana ekrana eklemek için:</p>
+                  <h3 className="font-black text-white text-lg">Restoran Pro</h3>
+                  <p className="text-xs text-slate-400">Uygulama Olarak Yükle</p>
                 </div>
               </div>
               <button
-                onClick={() => {
-                  setShowPrompt(false)
-                  setShowManualFallback(false)
-                }}
-                className="p-1 text-white/30 hover:text-white transition-all"
+                onClick={handleDismiss}
+                className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors"
               >
-                <X size={16} />
+                <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
-            <div className="text-xs text-white/60 space-y-1 mb-3">
-              <p>1️⃣ Paylaş butonuna (↗️) tıkla</p>
-              <p>2️⃣ "Ana Ekrana Ekle" seçeneğini seç</p>
-            </div>
-            <button
-              onClick={() => {
-                setShowPrompt(false)
-                setShowManualFallback(false)
-              }}
-              className="w-full px-4 py-2.5 bg-primary hover:bg-primary/90 text-black font-black rounded-xl transition-all text-sm"
-            >
-              Anladım
-            </button>
-          </div>
-        </motion.div>
-      </AnimatePresence>
-    )
-  }
 
-  // Android ve diğer tarayıcılar
-  if (!isIOS && (showPrompt || showManualFallback) && !isInstalled) {
-    return (
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 100 }}
-          className="fixed bottom-6 left-4 right-4 lg:left-auto lg:right-6 lg:w-96 z-[9999]"
-        >
-          <div className="relative overflow-hidden bg-zinc-900/95 border border-white/10 p-5 rounded-3xl shadow-2xl backdrop-blur-2xl">
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/20 blur-[50px] rounded-full pointer-events-none" />
-            
-            <div className="relative z-10 flex items-start gap-4">
-              <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 rotate-3">
-                <Smartphone className="w-6 h-6 text-black" />
+            {/* Content */}
+            <p className="text-sm text-slate-300 mb-4">
+              {isIOS
+                ? '📱 Safari\'dan "Paylaş" → "Ana Ekrana Ekle" ile kurabilirsin'
+                : 'Uygulamayı telefonuna indir ve hızlı erişim sağla'}
+            </p>
+
+            {/* Features */}
+            <div className="space-y-2 mb-6">
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                Çevrimdışı çalışma
               </div>
-              
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-black text-white tracking-tight uppercase">Restoran Pro</h3>
-                  <div className="bg-primary/20 text-primary text-[8px] font-black px-1.5 py-0.5 rounded border border-primary/20 uppercase">
-                    Hızlı Erişim
-                  </div>
-                </div>
-                <p className="text-xs text-white/50 leading-relaxed">
-                  Uygulamayı ana ekranına ekleyerek saniyeler içinde sipariş al ve masaları yönet.
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                Hızlı açılış
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-300">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                Bildirimler
+              </div>
+            </div>
+
+            {/* Buttons */}
+            {isIOS ? (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-400 mb-3">
+                  <strong>iOS Kurulum Adımları:</strong><br/>
+                  1. Safarideki Paylaş butonuna bas<br/>
+                  2. "Ana Ekrana Ekle" seçeneğini seç<br/>
+                  3. Adı onayla ve ekle
                 </p>
-                
-                <div className="flex items-center gap-3 pt-3">
-                  <button
-                    onClick={handleInstall}
-                    disabled={isInstalling || !deferredPrompt}
-                    className="flex-1 bg-primary hover:bg-primary/90 disabled:opacity-50 text-black text-xs font-black py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95"
-                  >
-                    {isInstalling ? (
-                      <>
-                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>
-                          <Download className="w-3.5 h-3.5" />
-                        </motion.div>
-                        YÜKLENIYOR
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-3.5 h-3.5" />
-                        ŞİMDİ YÜKLE
-                      </>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowPrompt(false)
-                      setShowManualFallback(false)
-                    }}
-                    disabled={isInstalling}
-                    className="px-3 py-2.5 text-white/30 hover:text-white transition-all text-xs font-bold disabled:opacity-50"
-                  >
-                    DAHA SONRA
-                  </button>
-                </div>
+                <button
+                  onClick={handleDismiss}
+                  className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg transition-all"
+                >
+                  Anladım
+                </button>
               </div>
-              
-              <button
-                onClick={() => {
-                  setShowPrompt(false)
-                  setShowManualFallback(false)
-                }}
-                disabled={isInstalling}
-                className="absolute top-2 right-2 p-1 text-white/20 hover:text-white transition-all disabled:opacity-50"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDismiss}
+                  className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg transition-all"
+                >
+                  Sonra
+                </button>
+                <button
+                  onClick={handleInstall}
+                  disabled={isInstalling}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-slate-600 disabled:to-slate-600 text-white font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  {isInstalling ? 'Yükleniyor...' : 'Yükle'}
+                </button>
+              </div>
+            )}
+
+            {/* Bottom Info */}
+            <p className="text-xs text-slate-500 mt-3 text-center">
+              💡 Uygulama tarayıcıdan bağımsız çalışır
+            </p>
           </div>
         </motion.div>
-      </AnimatePresence>
-    )
-  }
-
-  return null
+      )}
+    </AnimatePresence>
+  )
 }

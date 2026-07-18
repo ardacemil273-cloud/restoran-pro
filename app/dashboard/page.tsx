@@ -2,12 +2,13 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { usePatronOnly } from '@/hooks/useRoleCheck'
 import {
   ShoppingCart, Users, Package, ChefHat, QrCode, BarChart3,
   CalendarDays, Tag, Warehouse, TrendingDown, Brain, UtensilsCrossed,
   Phone, DollarSign, Zap, Flame, AlertTriangle, CheckCircle,
   Clock, ArrowRight, TrendingUp, Activity, MapPin, MessageCircle,
-  Mic, Sparkles, Crown, Building2, Shield, FileText, Award, RefreshCw
+  Mic, Sparkles, Crown, Building2, Shield, FileText, Award, RefreshCw, Link2
 } from 'lucide-react'
 
 type Stats = {
@@ -22,6 +23,8 @@ type Stats = {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
+  const { role, loading: roleLoading } = usePatronOnly()
   const [stats, setStats] = useState<Stats>({
     aktifSiparis: 0, bugunCiro: 0, toplamMasa: 0, doluMasa: 0,
     kritikStok: 0, bugunRezervasyonlar: 0, toplamMusteri: 0, bekleyenSiparis: 0
@@ -30,18 +33,36 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [sonSiparisler, setSonSiparisler] = useState<any[]>([])
   const [refreshing, setRefreshing] = useState(false)
-  const router = useRouter()
 
   useEffect(() => {
-    loadData()
-    const interval = setInterval(loadData, 30000)
-    return () => clearInterval(interval)
-  }, [])
+    if (!roleLoading && role === 'patron') {
+      loadData()
+      const interval = setInterval(loadData, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [role, roleLoading])
 
   const loadData = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return router.push('/login')
-    const { data: restoranData } = await supabase.from('restoranlar').select('*').eq('sahibi_id', user.id).single()
+    
+    // Önce user_id ile ara (yeni kayıtlar için)
+    let restoranData = null
+    const { data: restoranByUserId, error: err1 } = await supabase.from('restoranlar').select('*').eq('user_id', user.id).maybeSingle()
+    
+    if (restoranByUserId) {
+      restoranData = restoranByUserId
+    } else {
+      // Eğer user_id ile bulunamadıysa, sahibi_id ile ara (eski kayıtlar için)
+      const { data: restoranBySahibiId, error: err2 } = await supabase.from('restoranlar').select('*').eq('sahibi_id', user.id).maybeSingle()
+      restoranData = restoranBySahibiId
+      
+      // Schema hatası kontrolü
+      if (!restoranData && (err1?.message?.includes('schema') || err2?.message?.includes('schema'))) {
+        const { data: retry } = await supabase.from('restoranlar').select('*').eq('user_id', user.id).maybeSingle()
+        restoranData = retry
+      }
+    }
     if (!restoranData) { setLoading(false); return }
     setRestoran(restoranData)
     const bugun = new Date(); bugun.setHours(0, 0, 0, 0)
@@ -93,6 +114,7 @@ export default function DashboardPage() {
     { ad: 'AI Analiz', path: '/ai-analiz', icon: Brain, renk: '#10b981', bg: 'rgba(16,185,129,0.12)' },
     { ad: 'İndirimler', path: '/indirimler', icon: Tag, renk: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
     { ad: 'Aramalar', path: '/aramalar', icon: Phone, renk: '#84cc16', bg: 'rgba(132,204,22,0.12)' },
+    { ad: 'Entegrasyon', path: '/entegrasyon-merkezi', icon: Link2, renk: '#0ea5e9', bg: 'rgba(14,165,233,0.12)' },
     { ad: 'Ayarlar', path: '/ayarlar', icon: Activity, renk: '#6b7280', bg: 'rgba(107,114,128,0.12)' },
   ]
 
@@ -152,7 +174,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading) {
+  if (roleLoading || loading) {
     return (
       <div className="p-6 space-y-6" style={{backgroundColor: 'hsl(224,71%,4%)'}}>
         <div className="flex items-center gap-4 mb-8">

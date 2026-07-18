@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @theme {
   --font-sans: var(--font-geist-sans);
@@ -77,28 +78,66 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* UI Glitch & Tearing Prevention */
-* {
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  -webkit-transform-style: preserve-3d;
-  transform-style: preserve-3d;
+/* Glassmorphism Utility Classes */
+.glass {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.framer-motion-container {
-  transform: translateZ(0);
-  will-change: transform, opacity;
+.glass-sm {
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.glass-lg {
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+/* Glow Effects */
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glow-purple {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glow-orange {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.3), 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-warm {
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* Skeleton Loading */
@@ -113,45 +152,352 @@
   100% { background-position: -200% 0; }
 }
 
-/* Custom Scrollbar */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+@keyframes gradientShift {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+/* Mobil Uyumluluk ve PWA Desteği */
+
+/* Viewport ve Touch Optimizasyon */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Butonlar ve Interactive Elementler */
+  button, a, input, select, textarea {
+    -webkit-user-select: none;
+    user-select: none;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Mobil Navbar Sabit Pozisyon */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  /* Mobil Sidebar */
+  aside {
+    transition: transform 0.3s ease-in-out;
+    will-change: transform;
+  }
+
+  /* Scroll Performansı */
+  main {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Mobil Input Optimizasyonu */
+  input, textarea, select {
+    font-size: 16px; /* iOS zoom önlemek için */
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 8px;
+  }
+
+  /* Mobil Menü Açılırken Scroll Engelleme */
+  body.menu-open {
+    overflow: hidden;
+  }
+
+  /* Mobil Kart Tasarımı */
+  .card {
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  /* Mobil Buton Tasarımı */
+  .btn {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+
+  /* Mobil Modal */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .modal-content {
+    width: 100%;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Safe Area Desteği - Sadece PWA standalone modunda */
+  /* body padding yerine utility class kullanınız */
 }
 
-.custom-scrollbar::-webkit-scrollbar {
+/* PWA Standalone Modu */
+@media (display-mode: standalone) {
+  /* Status bar rengi */
+  body {
+    background-color: #18181b;
+  }
+
+  /* Header sabit */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  /* Bottom navigation safe area */
+  nav[role="navigation"] {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Tablet Optimizasyonu */
+@media (min-width: 769px) and (max-width: 1024px) {
+  main {
+    padding: 16px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Landscape Modu */
+@media (orientation: landscape) and (max-height: 500px) {
+  header {
+    height: 44px;
+  }
+
+  main {
+    margin-top: 44px;
+  }
+
+  .modal-content {
+    max-height: 80vh;
+  }
+}
+
+/* Haptic Feedback Desteği */
+@supports ((-webkit-touch-callout: none)) {
+  button, a[role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Performans Optimizasyonu */
+* {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+main {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Mobil Scrolling Smooth */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobil Transition Performansı */
+.transition {
+  will-change: auto;
+}
+
+.transition-transform {
+  will-change: transform;
+}
+
+/* Mobil Focus Durumu */
+input:focus, button:focus, a:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Modern Button Hover Effects */
+button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Modern Card Hover Effects */
+.card {
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  z-index: 2;
+}
+
+/* Framer Motion Ghosting Fix */
+.motion-fix {
+  position: relative;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.z-10 { z-index: 10 !important; }
+.z-20 { z-index: 20 !important; }
+.z-30 { z-index: 30 !important; }
+.z-40 { z-index: 40 !important; }
+.z-50 { z-index: 50 !important; }
+
+/* Mobil Placeholder */
+input::placeholder, textarea::placeholder {
+  color: rgba(161, 161, 170, 0.7);
+}
+
+/* Mobil Scrollbar Gizleme */
+::-webkit-scrollbar {
   width: 4px;
+  height: 4px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
+::-webkit-scrollbar-thumb {
+  background: rgba(113, 113, 122, 0.5);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 113, 122, 0.8);
+}
+
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: rgba(113, 113, 122, 0.4);
+  border-radius: 2px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Mobile Safe Area Utilities */
+/* Safe Area Utilities */
 .safe-area-inset-top {
   padding-top: env(safe-area-inset-top);
 }
-
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Smooth Transitions */
-.page-transition-wrapper {
-  will-change: transform, opacity;
+/* Enhanced Mobile Accessibility */
+@media (max-width: 768px) {
+  /* Improved touch targets */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Better form inputs */
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  /* Improved focus states */
+  input:focus,
+  textarea:focus,
+  select:focus,
+  button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+  }
+
+  /* Better card spacing */
+  .card {
+    margin-bottom: 12px;
+  }
+
+  /* Responsive grid */
+  .grid-mobile {
+    grid-template-columns: 1fr;
+  }
+
+  /* Safe area for bottom sheets */
+  .bottom-sheet {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
 }
 
-/* Prevent layout shift on scrollbar appearance */
-html {
-  overflow-y: scroll;
-  scrollbar-gutter: stable;
+/* Tablet Optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .grid-tablet {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: more) {
+  button,
+  input,
+  select,
+  textarea {
+    border-width: 2px;
+  }
 }

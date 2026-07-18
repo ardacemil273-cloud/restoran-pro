@@ -69,7 +69,7 @@ export default function GarsonPage() {
       .select('*, restoranlar(*)')
       .eq('kullanici_id', user.id)
       .eq('aktif', true)
-      .single()
+      .maybeSingle()
 
     // Eğer garson değilse, restoran sahibi mi kontrol et
     if (!garsonData) {
@@ -77,7 +77,7 @@ export default function GarsonPage() {
       .from('restoranlar')
       .select('*')
       .eq('sahibi_id', user.id)
-      .single()
+      .maybeSingle()
 
       if (!restoranData) {
         // kullanici_restoran tablosundan dene
@@ -85,7 +85,7 @@ export default function GarsonPage() {
           .from('kullanici_restoran')
           .select('restoran_id, restoranlar(*)')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
 
         if (!krData) {
           toast.error('Erişim reddedildi')

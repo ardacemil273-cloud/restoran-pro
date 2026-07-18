@@ -101,6 +101,24 @@ export default function MobileBottomNav() {
           </button>
           <button
             onClick={() => {
+              router.push('/entegrasyon-merkezi')
+              setMenuAcik(false)
+            }}
+            className="w-full text-left px-4 py-2 text-cyan-300 hover:bg-cyan-500/10 rounded-lg text-sm font-bold transition"
+          >
+            🔗 Entegrasyonlar
+          </button>
+          <button
+            onClick={() => {
+              router.push('/garson-yonetimi')
+              setMenuAcik(false)
+            }}
+            className="w-full text-left px-4 py-2 text-cyan-300 hover:bg-cyan-500/10 rounded-lg text-sm font-bold transition"
+          >
+            👥 Garson Yönetimi
+          </button>
+          <button
+            onClick={() => {
               router.push('/bildirimler')
               setMenuAcik(false)
             }}
