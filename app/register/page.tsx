@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -20,15 +19,6 @@ export default function RegisterPage() {
   const [copied, setCopied] = useState(false)
   const router = useRouter()
 
-  const generateRestoranKodu = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-    let kod = ''
-    for (let i = 0; i < 6; i++) {
-      kod += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    return kod
-  }
-
   const handleRegister = async () => {
     if (!email || !sifre || !restoranAd) {
       toast.error('E-posta, şifre ve restoran adını doldurunuz')
@@ -44,36 +34,21 @@ export default function RegisterPage() {
 
     setLoading(true)
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password: sifre })
-      if (error) {
-        toast.error('Kayıt hatası: ' + error.message)
-        setLoading(false)
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: sifre, restoranAd, patronSifre: finalPatronSifre }),
+      })
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        toast.error(result.error || 'Kayıt sırasında bir hata oluştu')
         return
       }
 
-      if (data.user) {
-        const kod = generateRestoranKodu()
-        
-        const { error: restoranError } = await supabase.from('restoranlar').insert([{
-          ad: restoranAd,
-          user_id: data.user.id,
-          sahibi_id: data.user.id,
-          patron_sifre: finalPatronSifre,
-          restoran_kodu: kod, // Otomatik oluşturulan kod
-          slug: restoranAd.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
-        }])
-
-        if (restoranError) {
-          console.error('Restoran oluşturma hatası:', restoranError)
-          toast.error('Restoran oluşturulamadı: ' + restoranError.message)
-          setLoading(false)
-          return
-        }
-
-        setRestoranKodu(kod)
-        setKayitTamamlandi(true)
-        toast.success('Hesap başarıyla oluşturuldu!')
-      }
+      setRestoranKodu(result.restoranKodu)
+      setKayitTamamlandi(true)
+      toast.success('Hesap başarıyla oluşturuldu!')
     } catch (error) {
       console.error('Kayıt hatası:', error)
       toast.error('Kayıt sırasında bir hata oluştu')

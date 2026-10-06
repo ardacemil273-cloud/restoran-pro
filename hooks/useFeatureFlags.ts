@@ -13,6 +13,11 @@ export type OzellikAdi =
   | 'stok_tahmin'
   | 'garson_performans'
   | 'dinamik_fiyat'
+  | 'dogum_gunu_bildirimi'
+  | 'sesli_siparis'
+  | 'dinamik_fiyatlandirma'
+  | 'musteri_sadakati'
+  | 'gelir_tahmini'
 
 export type OzellikAyari = {
   aktif: boolean
@@ -33,6 +38,11 @@ const VARSAYILAN_AYARLAR: OzellikAyarlari = {
   stok_tahmin: { aktif: true, aciklama: 'AI ile stok tüketim tahmini' },
   garson_performans: { aktif: true, aciklama: 'Garson performans takibi ve puanlama' },
   dinamik_fiyat: { aktif: false, aciklama: 'Yoğun saatlerde otomatik fiyat ayarı' },
+  dogum_gunu_bildirimi: { aktif: true, aciklama: 'Müşterilerin doğum günlerinde bildirim gönder' },
+  sesli_siparis: { aktif: true, aciklama: 'Sesli komutla sipariş oluşturma' },
+  dinamik_fiyatlandirma: { aktif: false, aciklama: 'Talebe göre dinamik fiyatlandırma' },
+  musteri_sadakati: { aktif: true, aciklama: 'Müşteri sadakat sistemi' },
+  gelir_tahmini: { aktif: true, aciklama: 'AI gelir tahmini' },
 }
 
 export function useFeatureFlags(restoranId?: string) {

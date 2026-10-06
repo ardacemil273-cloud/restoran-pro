@@ -8,6 +8,7 @@ import {
   BookOpen, HelpCircle, ToggleLeft, ToggleRight, Wifi, WifiOff
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { AnimatePresence, motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 

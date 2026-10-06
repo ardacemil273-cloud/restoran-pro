@@ -8,6 +8,12 @@ export async function middleware(req: NextRequest) {
     },
   })
 
+  // Build önizlemelerinde veya yanlış yapılandırılmış ortamlarda public sayfalar
+  // Supabase istemcisi kurulamadığı için 500 vermemeli.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return res
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

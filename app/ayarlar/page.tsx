@@ -113,7 +113,7 @@ export default function AyarlarPage() {
   const [restoranAciklama, setRestoranAciklama] = useState('')
   const [restoranLogosu, setRestoranLogosu] = useState('')
   const [kaydediyor, setKaydediyor] = useState(false)
-  const [ozellikAyarlari, setOzellikAyarlari] = useState<OzellikAyarlari>({})
+  const [ozellikAyarlari, setOzellikAyarlari] = useState<Partial<OzellikAyarlari>>({})
   const [ozellikKaydediyor, setOzellikKaydediyor] = useState(false)
   const [degisiklikVar, setDegisiklikVar] = useState(false)
   const [aktifSekme, setAktifSekme] = useState<'genel' | 'ozellikler' | 'entegrasyonlar' | 'patron-sifre'>('genel')
