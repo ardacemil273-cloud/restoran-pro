@@ -1,341 +1,98 @@
 'use client'
+
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import {
-  ChefHat, QrCode, BarChart3, Smartphone, Shield, Zap,
-  Check, Star, ArrowRight, Menu, X, Users, Package,
-  TrendingUp, Clock, CreditCard, Bell, Crown, Brain,
-  Warehouse, MessageCircle, Mic, Award, ChevronRight
+  ArrowRight, BarChart3, Bell, Check, ChefHat, ChevronDown, Clock3,
+  Gauge, Menu, Package, QrCode, ShieldCheck, Sparkles,
+  Users, WalletCards, X, Zap,
 } from 'lucide-react'
 
+const modules = [
+  { icon: QrCode, tag: 'MÜŞTERİ DENEYİMİ', title: 'QR menüden masaya', text: 'Müşteri menüyü açar, siparişini verir; garson ve mutfak aynı akışta ilerler.', color: '#f59e0b', href: '/qr' },
+  { icon: ChefHat, tag: 'OPERASYON', title: 'Servis hiç durmasın', text: 'Siparişler mutfağa anında düşer. Hazırlanıyor, hazır ve teslim edildi durumları tek ekranda.', color: '#fb7185', href: '/mutfak-ekrani' },
+  { icon: BarChart3, tag: 'KÂRLILIK', title: 'Rakamlar konuşsun', text: 'Ciro, ürün performansı, yoğun saatler ve giderler tek bir bakışta görünür.', color: '#7dd3b0', href: '/rapor' },
+  { icon: Package, tag: 'KONTROL', title: 'Stok bitmeden haberiniz olsun', text: 'Kritik stok uyarıları ve otomatik düşüm ile sürpriz tedarik krizlerini önleyin.', color: '#a78bfa', href: '/stok' },
+]
+
+const plans = [
+  { name: 'Başlangıç', price: '0', note: 'Küçük işletmeler için', features: ['5 masa', '20 ürün', 'Temel sipariş yönetimi', 'Garson paneli'], cta: 'Ücretsiz başla' },
+  { name: 'Profesyonel', price: '499', note: 'Büyüyen restoranlar için', popular: true, features: ['Sınırsız masa ve ürün', 'QR menü + mutfak ekranı', 'Kasa ve gelişmiş raporlar', 'Stok ve müşteri yönetimi'], cta: '14 gün ücretsiz dene' },
+  { name: 'Elite', price: '999', note: 'Çok şubeli yapılar için', features: ['Profesyonel plandaki her şey', 'AI analiz ve tahmin', 'Çoklu şube yönetimi', 'WhatsApp ve sadakat sistemi'], cta: 'Satış görüşmesi planla' },
+]
+
+function MiniDashboard() {
+  return (
+    <div className="relative mx-auto w-full max-w-[520px] rotate-[1.5deg] rounded-[28px] border border-white/10 bg-[#111821] p-3 shadow-[0_30px_90px_rgba(0,0,0,.45)] transition-transform duration-500 hover:rotate-0">
+      <div className="rounded-[21px] border border-white/8 bg-[#0c1219] p-4 sm:p-5">
+        <div className="mb-5 flex items-center justify-between">
+          <div><p className="text-[10px] font-bold uppercase tracking-[.22em] text-amber-400">Bugün · 09 Ekim</p><h3 className="mt-1 text-lg font-bold text-white">İyi akşamlar, Ayşe</h3></div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400/15 text-amber-300"><Bell size={17} /></div>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {[['₺24.680', 'Günlük ciro', '#f59e0b'], ['186', 'Sipariş', '#7dd3b0'], ['₺132,7', 'Ort. sepet', '#a78bfa']].map(([value, label, color]) => <div key={label} className="rounded-2xl border border-white/7 bg-white/[.035] p-3"><p className="text-sm font-black" style={{ color }}>{value}</p><p className="mt-1 text-[9px] uppercase tracking-wider text-white/35">{label}</p></div>)}
+        </div>
+        <div className="mt-3 rounded-2xl border border-white/7 bg-white/[.035] p-4">
+          <div className="mb-4 flex items-center justify-between"><div><p className="text-sm font-bold text-white">Satış performansı</p><p className="text-[10px] text-white/35">Son 7 gün · demo verisi</p></div><span className="flex items-center gap-1 text-xs font-bold text-emerald-300"><Zap size={12} /> +18,4%</span></div>
+          <div className="flex h-24 items-end gap-2 px-1">{[38, 51, 42, 68, 58, 78, 92].map((height, index) => <div key={index} className="flex flex-1 flex-col items-center gap-2"><div className={`w-full rounded-t-md ${index === 6 ? 'bg-amber-400' : 'bg-amber-400/25'}`} style={{ height: `${height}%` }} /><span className="text-[9px] text-white/25">{['P', 'S', 'Ç', 'P', 'C', 'C', 'P'][index]}</span></div>)}</div>
+        </div>
+        <div className="mt-3 flex items-center gap-3 rounded-2xl border border-rose-300/15 bg-rose-300/5 p-3"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-300/15 text-rose-300"><Clock3 size={15} /></div><div><p className="text-xs font-bold text-white">Mutfakta 4 yeni sipariş</p><p className="text-[10px] text-white/40">Ortalama hazırlık süresi 12 dk</p></div><ArrowRight className="ml-auto text-white/30" size={15} /></div>
+      </div>
+    </div>
+  )
+}
+
 export default function LandingPage() {
-  const [menuAcik, setMenuAcik] = useState(false)
-  const [yukleniyor, setYukleniyor] = useState(true)
   const router = useRouter()
+  const [loading, setLoading] = useState(true)
+  const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const [mobileMenu, setMobileMenu] = useState(false)
+  const [tables, setTables] = useState(12)
+  const [ticket, setTicket] = useState(220)
+  const [guests, setGuests] = useState(80)
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session) {
-        router.push('/masalar')
-      } else {
-        setYukleniyor(false)
-      }
-    }
-    checkSession()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.push('/masalar')
+      else setLoading(false)
+    })
   }, [router])
 
-  if (yukleniyor) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: 'hsl(224,71%,4%)'}}>
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)'}}>
-            <ChefHat className="w-6 h-6 text-white" />
-          </div>
-          <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
-        </div>
-      </div>
-    )
-  }
-
-  const ozellikler = [
-    { icon: QrCode, renk: '#f59e0b', baslik: 'QR Menü Sistemi', aciklama: 'Müşterileriniz QR kodu okutarak menüye anında ulaşır. Güncel fiyatlar, görseller ve kategoriler.' },
-    { icon: ChefHat, renk: '#f97316', baslik: 'Mutfak Ekranı (KDS)', aciklama: 'Siparişler anında mutfağa iletilir. Gerçek zamanlı durum takibi, ses bildirimi.' },
-    { icon: BarChart3, renk: '#3b82f6', baslik: 'Gelişmiş Raporlama', aciklama: 'Günlük, haftalık, aylık ciro raporları. En çok satan ürünler, saatlik yoğunluk analizi.' },
-    { icon: Smartphone, renk: '#22c55e', baslik: 'Garson Paneli', aciklama: 'Garsonlar kendi telefonlarından sipariş alır. Masa durumu, sipariş geçmişi.' },
-    { icon: Brain, renk: '#a855f7', baslik: 'AI Satış Analizi', aciklama: 'Yapay zeka destekli satış önerileri. Hangi ürünü ne zaman öne çıkaracağınızı öğrenin.' },
-    { icon: Warehouse, renk: '#ef4444', baslik: 'Stok Takibi', aciklama: 'Kritik stok uyarıları, otomatik stok düşümü. Hiç stok tükenmesin.' },
-    { icon: CreditCard, renk: '#06b6d4', baslik: 'Kasa & Ödeme', aciklama: 'Hızlı satış, fiş yazdırma, günlük kasa raporu. PayTR ile güvenli ödeme.' },
-    { icon: Users, renk: '#ec4899', baslik: 'Müşteri Yönetimi', aciklama: 'Müşteri kaydı, sipariş geçmişi, adres defteri. Paket siparişlerde hızlı arama.' },
-    { icon: Bell, renk: '#eab308', baslik: 'Rezervasyon Sistemi', aciklama: 'Online rezervasyon alın, masa planlaması yapın, hatırlatma gönderin.' },
-    { icon: Mic, renk: '#8b5cf6', baslik: 'AI Sesli Sipariş', aciklama: 'Sesle sipariş alın, AI otomatik analiz eder ve mutfağa iletir.' },
-    { icon: MessageCircle, renk: '#10b981', baslik: 'WhatsApp Siparişler', aciklama: 'WhatsApp üzerinden gelen siparişleri takip edin ve yönetin.' },
-    { icon: Award, renk: '#f59e0b', baslik: 'Sadakat Sistemi', aciklama: 'Puan sistemi, çark çevirme, doğum günü indirimleri ile müşteri bağlılığı.' },
+  const impact = useMemo(() => Math.round(tables * ticket * guests * 0.018), [tables, ticket, guests])
+  const faqs = [
+    ['Kurulum için teknik ekip gerekir mi?', 'Hayır. Hesabınızı açtıktan sonra restoran bilgilerinizi, masalarınızı ve menünüzü ekleyerek başlayabilirsiniz. İsterseniz ekibimiz kurulumda size eşlik eder.'],
+    ['Ücretsiz planda süre sınırı var mı?', 'Başlangıç planı temel kullanım için ücretsizdir. Profesyonel planın tüm özelliklerini ise 14 gün boyunca ücretsiz deneyebilirsiniz.'],
+    ['Mevcut sipariş kanallarımla çalışır mı?', 'Restoran Pro; QR menü, garson paneli, paket siparişi ve entegrasyon merkezi modülleriyle farklı sipariş akışlarını tek operasyon ekranında toplamak için tasarlanmıştır.'],
   ]
 
-  const paketler = [
-    {
-      ad: 'Başlangıç',
-      fiyat: 'Ücretsiz',
-      periyot: '',
-      renk: '#6b7280',
-      aciklama: 'Küçük işletmeler için',
-      ozellikler: ['5 Masa', '20 Ürün', 'Garson Paneli', 'Temel Sipariş Yönetimi'],
-      eksik: ['Kasa', 'QR Menü', 'Raporlama', 'AI Analiz'],
-      buton: 'Ücretsiz Başla',
-      href: '/register',
-      vurgulu: false,
-    },
-    {
-      ad: 'Profesyonel',
-      fiyat: '₺499',
-      periyot: '/ay',
-      renk: '#f59e0b',
-      aciklama: 'Büyüyen restoranlar için',
-      ozellikler: ['Sınırsız Masa', 'Sınırsız Ürün', 'QR Menü', 'Kasa & Ödeme', 'Raporlama', 'Stok Takibi', 'Müşteri Yönetimi', 'Rezervasyon'],
-      eksik: ['AI Analiz', 'Çoklu Şube'],
-      buton: '14 Gün Ücretsiz Dene',
-      href: '/register',
-      vurgulu: true,
-    },
-    {
-      ad: 'Elite Premium',
-      fiyat: '₺999',
-      periyot: '/ay',
-      renk: '#a855f7',
-      aciklama: 'Zincir restoranlar için',
-      ozellikler: ['Her şey dahil', 'AI Analiz & Tahmin', 'Çoklu Şube', 'AI Sesli Sipariş', 'WhatsApp Entegrasyonu', 'Sadakat Sistemi', 'Patron Merkezi', 'Öncelikli Destek'],
-      eksik: [],
-      buton: 'Hemen Başla',
-      href: '/register',
-      vurgulu: false,
-    },
-  ]
+  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[#0d1117]"><div className="h-9 w-9 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" /></div>
 
   return (
-    <div className="min-h-screen" style={{backgroundColor: 'hsl(224,71%,4%)', color: 'white'}}>
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b" style={{backgroundColor: 'rgba(10,14,39,0.9)', backdropFilter: 'blur(12px)', borderColor: 'rgba(255,255,255,0.06)'}}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)'}}>
-                <ChefHat className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-black text-white">Restoran Pro</span>
-            </div>
+    <main className="min-h-screen overflow-hidden bg-[#0d1117] text-white selection:bg-amber-400 selection:text-black">
+      <nav className="fixed inset-x-0 top-0 z-50 border-b border-white/[.07] bg-[#0d1117]/85 backdrop-blur-xl"><div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 lg:px-8">
+        <Link href="/" className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400 text-[#0d1117] shadow-[0_0_20px_rgba(245,158,11,.25)]"><ChefHat size={19} strokeWidth={2.5} /></span><span className="text-[15px] font-black tracking-tight">restoran<span className="text-amber-400">pro</span></span></Link>
+        <div className="hidden items-center gap-8 text-[13px] font-medium text-white/55 md:flex"><a href="#cozum">Çözüm</a><a href="#fiyatlar">Fiyatlar</a><a href="#hesapla">Etkiyi hesapla</a><a href="#sss">SSS</a></div>
+        <div className="hidden items-center gap-3 md:flex"><Link href="/login" className="px-3 py-2 text-sm font-semibold text-white/65">Giriş yap</Link><Link href="/register" className="rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-extrabold text-[#0d1117] shadow-[0_8px_24px_rgba(245,158,11,.18)]">Ücretsiz başla</Link></div>
+        <button aria-label="Menüyü aç" onClick={() => setMobileMenu(!mobileMenu)} className="rounded-lg p-2 text-white/70 md:hidden">{mobileMenu ? <X size={20} /> : <Menu size={20} />}</button>
+      </div>{mobileMenu && <div className="border-t border-white/10 bg-[#0d1117] px-5 pb-5 pt-3 md:hidden"><div className="flex flex-col gap-2 text-sm text-white/70"><a href="#cozum" onClick={() => setMobileMenu(false)} className="py-3">Çözüm</a><a href="#fiyatlar" onClick={() => setMobileMenu(false)} className="py-3">Fiyatlar</a><Link href="/login" className="mt-2 rounded-xl border border-white/10 py-3 text-center">Giriş yap</Link><Link href="/register" className="rounded-xl bg-amber-400 py-3 text-center font-bold text-black">Ücretsiz başla</Link></div></div>}</nav>
 
-            <div className="hidden md:flex items-center gap-8">
-              {['Özellikler', 'Fiyatlar', 'Hakkımızda'].map(item => (
-                <a key={item} href={`#${item.toLowerCase()}`} className="text-sm font-medium transition-colors" style={{color: 'rgba(255,255,255,0.6)'}}>
-                  {item}
-                </a>
-              ))}
-            </div>
+      <section className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 pb-24 pt-36 lg:grid-cols-[1fr_.94fr] lg:px-8 lg:pb-32 lg:pt-48"><div className="pointer-events-none absolute -left-32 top-28 h-96 w-96 rounded-full bg-amber-400/10 blur-[120px]" /><div className="relative"><p className="mb-6 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.22em] text-amber-400"><span className="h-px w-8 bg-amber-400" /> RESTORAN OPERASYON KOKPİTİ</p><h1 className="max-w-2xl text-[clamp(2.8rem,6vw,5.5rem)] font-black leading-[.94] tracking-[-.06em]">Yoğun serviste<br /><span className="text-amber-400">kontrol sizde.</span></h1><p className="mt-7 max-w-xl text-[17px] leading-8 text-white/55">Siparişten mutfağa, stoktan kasaya kadar restoranınızın tüm akışını tek ve anlaşılır bir panelden yönetin.</p><div className="mt-9 flex flex-col gap-3 sm:flex-row"><Link href="/register" className="group flex items-center justify-center gap-3 rounded-xl bg-amber-400 px-6 py-4 text-sm font-extrabold text-[#0d1117] transition hover:bg-amber-300">14 gün ücretsiz dene <ArrowRight size={17} className="transition group-hover:translate-x-1" /></Link><a href="#cozum" className="flex items-center justify-center gap-2 rounded-xl border border-white/12 px-6 py-4 text-sm font-bold text-white/75 transition hover:border-white/25 hover:text-white">Nasıl çalışır? <ChevronDown size={16} /></a></div><div className="mt-12 flex flex-wrap gap-x-7 gap-y-3 text-[11px] font-semibold text-white/42"><span className="flex items-center gap-2"><ShieldCheck size={15} className="text-emerald-300" /> Verileriniz size ait</span><span className="flex items-center gap-2"><Zap size={15} className="text-amber-400" /> Dakikalar içinde kurulum</span><span className="flex items-center gap-2"><Users size={15} className="text-violet-300" /> Ekip kullanımı</span></div></div><div className="relative lg:pl-4"><div className="absolute -inset-10 rounded-full bg-amber-400/5 blur-3xl" /><MiniDashboard /><div className="absolute -bottom-7 -left-3 hidden items-center gap-3 rounded-2xl border border-white/10 bg-[#18212b] px-4 py-3 shadow-xl sm:flex"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-300/15 text-emerald-300"><Gauge size={16} /></div><div><p className="text-xs font-bold">Operasyon görünür</p><p className="text-[10px] text-white/40">Tek ekranda, gerçek zamanlı</p></div></div></div></section>
 
-            <div className="hidden md:flex items-center gap-3">
-              <Link href="/login" className="text-sm font-semibold px-4 py-2 rounded-lg transition-all" style={{color: 'rgba(255,255,255,0.7)'}}>
-                Giriş Yap
-              </Link>
-              <Link href="/register" className="text-sm font-bold px-5 py-2.5 rounded-xl text-black transition-all" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)', boxShadow: '0 4px 12px rgba(245,158,11,0.3)'}}>
-                Ücretsiz Başla
-              </Link>
-            </div>
+      <section className="border-y border-white/[.07] bg-white/[.018]"><div className="mx-auto grid max-w-7xl grid-cols-2 px-5 py-7 sm:grid-cols-4 lg:px-8">{[['01', 'Sipariş akışı'], ['02', 'Mutfak kontrolü'], ['03', 'Stok görünürlüğü'], ['04', 'Kârlılık odağı']].map(([num, text]) => <div key={num} className="flex items-center gap-3 border-white/10 px-3 py-2 first:pl-0 sm:border-r last:border-0"><span className="font-mono text-xs text-amber-400">{num}</span><span className="text-xs font-bold text-white/55">{text}</span></div>)}</div></section>
 
-            <button className="md:hidden p-2 rounded-lg" style={{color: 'rgba(255,255,255,0.7)'}} onClick={() => setMenuAcik(!menuAcik)}>
-              {menuAcik ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
-        </div>
+      <section id="cozum" className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32"><div className="mb-14 flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="mb-4 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-amber-400">/ TEK PANELDE</p><h2 className="max-w-xl text-4xl font-black tracking-[-.04em] sm:text-5xl">İşletmenizin her<br /><span className="text-white/40">hareketini görün.</span></h2></div><p className="max-w-sm text-sm leading-6 text-white/45">Dağınık araçlar yerine, servis ekibinin gerçekten kullanabileceği sade bir operasyon merkezi.</p></div><div className="grid gap-4 md:grid-cols-2">{modules.map(({ icon: Icon, tag, title, text, color, href }, index) => <Link key={title} href={href} className={`group relative overflow-hidden rounded-3xl border border-white/[.08] bg-white/[.025] p-7 transition duration-300 hover:-translate-y-1 hover:border-white/20 ${index === 0 ? 'md:row-span-2 md:flex md:flex-col md:justify-end md:min-h-[390px]' : 'min-h-[185px]'}`}><div className="absolute right-0 top-0 h-36 w-36 rounded-full opacity-[.08] blur-2xl" style={{ backgroundColor: color }} /><div className="relative"><span className="mb-8 inline-flex h-11 w-11 items-center justify-center rounded-2xl" style={{ backgroundColor: `${color}18`, color }}><Icon size={21} /></span><p className="mb-2 font-mono text-[10px] font-bold tracking-[.16em]" style={{ color }}>{tag}</p><h3 className="text-xl font-black tracking-tight">{title}</h3><p className="mt-2 max-w-sm text-sm leading-6 text-white/45">{text}</p><span className="mt-6 flex items-center gap-2 text-xs font-bold text-white/55 group-hover:text-white">Modülü keşfet <ArrowRight size={14} className="transition group-hover:translate-x-1" /></span></div></Link>)}</div></section>
 
-        {menuAcik && (
-          <div className="md:hidden border-t p-4 space-y-3" style={{backgroundColor: 'hsl(224,71%,4%)', borderColor: 'rgba(255,255,255,0.06)'}}>
-            <Link href="/login" className="block text-center py-3 rounded-xl font-semibold" style={{color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.1)'}}>
-              Giriş Yap
-            </Link>
-            <Link href="/register" className="block text-center py-3 rounded-xl font-bold text-black" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)'}}>
-              Ücretsiz Başla
-            </Link>
-          </div>
-        )}
-      </nav>
+      <section id="hesapla" className="border-y border-white/[.07] bg-[#111821] px-5 py-24 lg:px-8"><div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[.85fr_1.15fr]"><div><p className="mb-4 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-emerald-300">/ ETKİYİ HESAPLA</p><h2 className="text-4xl font-black tracking-[-.04em] sm:text-5xl">Daha düzenli servis,<br /><span className="text-emerald-300">daha güçlü kasa.</span></h2><p className="mt-5 max-w-md text-sm leading-7 text-white/50">İşletmenizin kabaca ne kadar ek ciro potansiyeli taşıdığını görün. Bu hesaplama demo tahminidir; gerçek sonuçlar işletmenize göre değişir.</p><div className="mt-8 flex items-center gap-3 text-xs text-white/45"><Sparkles size={15} className="text-emerald-300" /> Kaçan siparişleri görünür kılma varsayımı</div></div><div className="rounded-3xl border border-white/10 bg-[#0d1117] p-6 sm:p-8"><div className="space-y-7">{[['Masa sayısı', tables, 5, 80, setTables], ['Ortalama hesap (₺)', ticket, 80, 800, setTicket], ['Günlük müşteri', guests, 10, 300, setGuests]].map(([label, value, min, max, setter]) => <label key={label as string} className="block"><div className="mb-3 flex items-center justify-between text-sm"><span className="font-semibold text-white/65">{label as string}</span><span className="font-mono font-bold text-amber-400">{value as number}</span></div><input aria-label={label as string} type="range" min={min as number} max={max as number} value={value as number} onChange={(event) => (setter as (value: number) => void)(Number(event.target.value))} className="h-1.5 w-full cursor-pointer accent-amber-400" /></label>)}</div><div className="mt-9 border-t border-white/10 pt-6"><div className="flex items-end justify-between gap-5"><div><p className="text-xs font-bold text-white/45">Tahmini aylık ek ciro potansiyeli</p><p className="mt-2 text-4xl font-black tracking-tight text-emerald-300">₺{impact.toLocaleString('tr-TR')}</p></div><WalletCards className="text-emerald-300/60" size={30} /></div><Link href="/register" className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-emerald-300 py-3.5 text-sm font-extrabold text-[#0d1117]">Kendi verilerimle dene <ArrowRight size={16} /></Link></div></div></div></section>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-1/4 w-96 h-96 rounded-full opacity-8" style={{background: 'radial-gradient(circle, rgba(245,158,11,0.15), transparent)'}} />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full opacity-8" style={{background: 'radial-gradient(circle, rgba(249,115,22,0.15), transparent)'}} />
-        </div>
+      <section id="fiyatlar" className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-32"><div className="mb-14 text-center"><p className="mb-4 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-amber-400">/ SADE VE ŞEFFAF</p><h2 className="text-4xl font-black tracking-[-.04em] sm:text-5xl">İşletmeniz büyüdükçe<br /><span className="text-white/40">paketiniz de büyür.</span></h2></div><div className="grid gap-4 lg:grid-cols-3">{plans.map((plan) => <div key={plan.name} className={`relative rounded-3xl border p-7 ${plan.popular ? 'border-amber-400/50 bg-amber-400/[.07]' : 'border-white/[.08] bg-white/[.025]'}`}>{plan.popular && <span className="absolute -top-3 left-7 rounded-full bg-amber-400 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-black">En çok tercih edilen</span>}<p className="text-sm font-bold text-amber-400">{plan.name}</p><p className="mt-2 text-sm text-white/40">{plan.note}</p><div className="mt-6 flex items-end gap-1"><span className="text-5xl font-black tracking-[-.06em]">₺{plan.price}</span><span className="mb-2 text-xs text-white/40">/ ay</span></div><div className="my-7 space-y-3 border-y border-white/10 py-6">{plan.features.map((feature) => <p key={feature} className="flex items-center gap-2.5 text-sm text-white/65"><Check size={15} className="text-emerald-300" />{feature}</p>)}</div><Link href="/register" className={`flex items-center justify-center rounded-xl py-3.5 text-sm font-extrabold ${plan.popular ? 'bg-amber-400 text-black' : 'border border-white/15 text-white'}`}>{plan.cta}</Link></div>)}</div></section>
 
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 text-sm font-semibold" style={{background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b'}}>
-            <Zap className="w-4 h-4" />
-            <span>Türkiye'nin #1 Restoran Yönetim Sistemi</span>
-          </div>
+      <section id="sss" className="border-t border-white/[.07] bg-white/[.018] px-5 py-24 lg:px-8"><div className="mx-auto grid max-w-5xl gap-12 md:grid-cols-[.75fr_1.25fr]"><div><p className="mb-4 font-mono text-[10px] font-bold uppercase tracking-[.2em] text-amber-400">/ AKLINIZDAKİLER</p><h2 className="text-4xl font-black tracking-[-.04em]">Sık sorulan<br /><span className="text-white/40">sorular.</span></h2></div><div className="divide-y divide-white/10">{faqs.map(([question, answer], index) => <div key={question}><button className="flex w-full items-center justify-between gap-5 py-5 text-left text-sm font-bold" onClick={() => setOpenFaq(openFaq === index ? null : index)}>{question}<ChevronDown size={17} className={`shrink-0 text-white/45 transition ${openFaq === index ? 'rotate-180 text-amber-400' : ''}`} /></button>{openFaq === index && <p className="max-w-xl pb-5 text-sm leading-7 text-white/45">{answer}</p>}</div>)}</div></div></section>
 
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight mb-6">
-            Restoranınızı<br />
-            <span style={{background: 'linear-gradient(135deg, #f59e0b, #f97316, #ef4444)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
-              Akıllıca Yönetin
-            </span>
-          </h1>
+      <section className="mx-5 my-20 overflow-hidden rounded-[28px] bg-amber-400 px-6 py-14 text-center text-[#0d1117] sm:px-10"><div className="relative mx-auto max-w-3xl"><p className="mb-4 font-mono text-[10px] font-black uppercase tracking-[.2em] opacity-60">/ İLK ADIMI ATIN</p><h2 className="text-4xl font-black tracking-[-.05em] sm:text-6xl">Restoranınızı<br />daha akıllı yönetin.</h2><p className="mx-auto mt-5 max-w-md text-sm font-medium leading-6 opacity-70">Kurulum için kredi kartı gerekmez. Menüden rapora kadar tüm operasyonu tek panelde deneyin.</p><Link href="/register" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#0d1117] px-6 py-4 text-sm font-extrabold text-white">Ücretsiz hesabımı aç <ArrowRight size={17} /></Link></div></section>
 
-          <p className="text-xl max-w-2xl mx-auto mb-10 leading-relaxed" style={{color: 'rgba(255,255,255,0.5)'}}>
-            QR menü, garson paneli, mutfak ekranı, kasa, stok takibi ve yapay zeka analizi — hepsi tek platformda.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/register" className="flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-black text-lg transition-all" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)', boxShadow: '0 8px 24px rgba(245,158,11,0.3)'}}>
-              <span>14 Gün Ücretsiz Dene</span>
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link href="/login" className="flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold text-lg transition-all" style={{color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.1)'}}>
-              <span>Giriş Yap</span>
-              <ChevronRight className="w-5 h-5" />
-            </Link>
-          </div>
-
-          <div className="flex items-center justify-center gap-8 mt-12">
-            {[
-              { value: '500+', label: 'Aktif Restoran' },
-              { value: '1M+', label: 'İşlenen Sipariş' },
-              { value: '99.9%', label: 'Uptime' },
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <p className="text-2xl font-black" style={{color: '#f59e0b'}}>{stat.value}</p>
-                <p className="text-xs mt-1" style={{color: 'rgba(255,255,255,0.4)'}}>{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="özellikler" className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-black mb-4">
-              İhtiyacınız Olan Her Şey,{' '}
-              <span style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
-                Tek Yerde
-              </span>
-            </h2>
-            <p className="text-lg max-w-2xl mx-auto" style={{color: 'rgba(255,255,255,0.4)'}}>
-              12 farklı modül ile restoranınızın tüm operasyonlarını dijitalleştirin.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {ozellikler.map((ozellik, i) => {
-              const Icon = ozellik.icon
-              return (
-                <div key={i} className="p-5 rounded-2xl transition-all group" style={{background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)'}}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110" style={{background: `${ozellik.renk}20`, border: `1px solid ${ozellik.renk}30`}}>
-                    <Icon className="w-5 h-5" style={{color: ozellik.renk}} />
-                  </div>
-                  <h3 className="font-bold text-white mb-2 text-sm">{ozellik.baslik}</h3>
-                  <p className="text-xs leading-relaxed" style={{color: 'rgba(255,255,255,0.4)'}}>{ozellik.aciklama}</p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section id="fiyatlar" className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-black mb-4">
-              Şeffaf{' '}
-              <span style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
-                Fiyatlandırma
-              </span>
-            </h2>
-            <p className="text-lg" style={{color: 'rgba(255,255,255,0.4)'}}>Gizli ücret yok. İstediğiniz zaman iptal edin.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {paketler.map((paket, i) => (
-              <div
-                key={i}
-                className="p-6 rounded-2xl relative transition-all"
-                style={{
-                  background: paket.vurgulu ? `linear-gradient(135deg, rgba(245,158,11,0.1), rgba(249,115,22,0.1))` : 'rgba(255,255,255,0.03)',
-                  border: paket.vurgulu ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(255,255,255,0.08)',
-                  transform: paket.vurgulu ? 'scale(1.02)' : 'scale(1)',
-                }}
-              >
-                {paket.vurgulu && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold text-black" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)'}}>
-                    En Popüler
-                  </div>
-                )}
-
-                <div className="mb-6">
-                  <p className="text-sm font-semibold mb-1" style={{color: paket.renk}}>{paket.ad}</p>
-                  <div className="flex items-end gap-1 mb-2">
-                    <span className="text-4xl font-black text-white">{paket.fiyat}</span>
-                    {paket.periyot && <span className="text-sm mb-1" style={{color: 'rgba(255,255,255,0.4)'}}>{paket.periyot}</span>}
-                  </div>
-                  <p className="text-sm" style={{color: 'rgba(255,255,255,0.4)'}}>{paket.aciklama}</p>
-                </div>
-
-                <div className="space-y-2.5 mb-6">
-                  {paket.ozellikler.map((oz, j) => (
-                    <div key={j} className="flex items-center gap-2.5">
-                      <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{background: `${paket.renk}20`}}>
-                        <Check className="w-2.5 h-2.5" style={{color: paket.renk}} />
-                      </div>
-                      <span className="text-sm" style={{color: 'rgba(255,255,255,0.7)'}}>{oz}</span>
-                    </div>
-                  ))}
-                  {paket.eksik.map((oz, j) => (
-                    <div key={j} className="flex items-center gap-2.5 opacity-40">
-                      <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{background: 'rgba(255,255,255,0.05)'}}>
-                        <X className="w-2.5 h-2.5 text-white" />
-                      </div>
-                      <span className="text-sm line-through" style={{color: 'rgba(255,255,255,0.4)'}}>{oz}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  href={paket.href}
-                  className="block text-center py-3 rounded-xl font-bold text-sm transition-all"
-                  style={paket.vurgulu
-                    ? {background: 'linear-gradient(135deg, #f59e0b, #f97316)', color: 'black', boxShadow: '0 4px 12px rgba(245,158,11,0.3)'}
-                    : {background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.1)'}
-                  }
-                >
-                  {paket.buton}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="p-12 rounded-3xl relative overflow-hidden" style={{background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(249,115,22,0.1))', border: '1px solid rgba(245,158,11,0.2)'}}>
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-10" style={{background: 'radial-gradient(circle, #f59e0b, transparent)'}} />
-            </div>
-            <div className="relative z-10">
-              <Crown className="w-12 h-12 mx-auto mb-4" style={{color: '#f59e0b'}} />
-              <h2 className="text-3xl font-black mb-4">Hemen Başlayın</h2>
-              <p className="text-lg mb-8" style={{color: 'rgba(255,255,255,0.5)'}}>
-                14 gün ücretsiz deneyin. Kredi kartı gerekmez.
-              </p>
-              <Link href="/register" className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-black text-lg" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)', boxShadow: '0 8px 24px rgba(245,158,11,0.3)'}}>
-                <span>Ücretsiz Hesap Oluştur</span>
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t py-8 px-4" style={{borderColor: 'rgba(255,255,255,0.06)'}}>
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{background: 'linear-gradient(135deg, #f59e0b, #f97316)'}}>
-              <ChefHat className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-black text-white">Restoran Pro</span>
-          </div>
-          <p className="text-sm" style={{color: 'rgba(255,255,255,0.3)'}}>© 2026 Restoran Pro. Tüm hakları saklıdır.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm hover:underline" style={{color: 'rgba(255,255,255,0.4)'}}>Giriş</Link>
-            <Link href="/register" className="text-sm hover:underline" style={{color: 'rgba(255,255,255,0.4)'}}>Kayıt</Link>
-          </div>
-        </div>
-      </footer>
-    </div>
+      <footer className="mx-auto flex max-w-7xl flex-col gap-5 border-t border-white/[.07] px-5 py-8 text-xs text-white/35 sm:flex-row sm:items-center sm:justify-between lg:px-8"><div className="flex items-center gap-2 font-bold text-white/55"><span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-400 text-[#0d1117]"><ChefHat size={13} /></span> restoranpro</div><p>Restoran operasyonunun sade hali.</p><div className="flex gap-5"><Link href="/login">Giriş yap</Link><Link href="/register">Kayıt ol</Link></div></footer>
+    </main>
   )
 }
